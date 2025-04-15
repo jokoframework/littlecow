@@ -42,6 +42,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+/android/app/.cxx
 
 # Created by https://www.toptal.com/developers/gitignore/api/flutter,androidstudio
 # Edit at https://www.toptal.com/developers/gitignore?templates=flutter,androidstudio
