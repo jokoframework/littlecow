@@ -1,122 +1,172 @@
+import 'dart:async';
 import 'package:bloc/bloc.dart';
-import 'dart:developer' as developer;
-import 'package:dio/dio.dart';
+import 'package:littlecow/controller/events/auth_event.dart';
+import 'package:littlecow/controller/states/auth_state.dart';
+import 'package:littlecow/data/auth_repository.dart';
 
-import '../../model/user_model.dart';
-import '../events/auth_event.dart';
-import '../states/auth_state.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
-  final Dio _dio;
-
-  AuthBloc({Dio? dio})
-      : _dio = dio ?? Dio(),
-        super(const AuthInitial()) {
-    on<AuthStarted>(_onAuthStarted);
-    on<AuthLoginRequested>(_onAuthLoginRequested);
-    on<AuthLogoutRequested>(_onAuthLogoutRequested);
+  final AuthRepository _authRepository;
+  StreamSubscription? _tokenInvalidSubscription;
+  Timer? _tokenVerificationTimer;
+  
+  AuthBloc({AuthRepository? authRepository}) 
+      : _authRepository = authRepository ?? AuthRepository(),
+        super(AuthInitial()) {
+    on<AuthCheckRequested>(_onAuthCheckRequested);
+    on<AuthLoggedIn>(_onAuthLoggedIn);
+    on<AuthLoggedOut>(_onAuthLoggedOut);
+    on<AuthTokenInvalidated>(_onAuthTokenInvalidated);
+    // Escucha el evento de token inválido y emite un estado correspondiente
+    _tokenInvalidSubscription = _authRepository.onTokenInvalid.listen(
+      (_) => add(AuthTokenInvalidated()),
+    );
+  }
+  /// Verificación periódica del token
+  /// 
+  /// 1. Verica si el token es válido cada 5 minutos
+  /// 2. Si el token no es válido, emite un evento de token invalidado
+  /// 3. Cancela cualquier timer existente antes de crear uno nuevo [_stopTokenVerification]
+  /// 4. Lanza una excepción en caso de error
+  ///   
+  void _startTokenVerification() {
+    _stopTokenVerification();
+    _tokenVerificationTimer = Timer.periodic(const Duration(minutes: 5), (_) async {
+      try {
+        final tokenInfo = await _authRepository.getTokenInfo();
+        if (tokenInfo == null || !tokenInfo.success) {
+          add(AuthTokenInvalidated());
+        }
+      } catch (e) {
+        add(AuthTokenInvalidated());      
+      }
+    });
+  }
+  /// Detiene la verificación periódica del token
+  void _stopTokenVerification() {
+    _tokenVerificationTimer?.cancel();
+    _tokenVerificationTimer = null;
   }
 
-  void _onAuthStarted(AuthStarted event, Emitter<AuthState> emit) {
-    developer.log('AuthStarted event triggered', name: 'AuthBloc');
-    emit(const AuthInitial());
-  }
-
-  void _onAuthLoginRequested(AuthLoginRequested event, Emitter<AuthState> emit) async {
-    developer.log('AuthLoginRequested event triggered', name: 'AuthBloc');
-    emit(const AuthInProgress()); // Emit loading state
-
+  /// Este método se encarga de verificar si el usuario ya está autenticado
+  /// y emite el estado correspondiente.
+  /// 
+  /// 1. Comprueba si hay una sesión activa
+  /// 2. Si hay sesión activa, obtiene el usuario actual y 
+  /// empieza la verificación periódica del token [_startTokenVerification]
+  /// 3. Si no hay sesión activa, emite un estado de no autenticado
+  /// 4. Si hay un error, emite un estado de error
+  /// 
+  /// Parametros:
+  /// - [event] : Evento de verificación de autenticación
+  /// - [emit] : Función para emitir nuevos estados
+  /// 
+  FutureOr<void> _onAuthCheckRequested(
+      AuthCheckRequested event, Emitter<AuthState> emit) async {
+    
+    emit(AuthLoading());
     try {
-      final loginResponse = await _login(event.name, event.password);
-      if (!loginResponse['success']) {
-        throw Exception(loginResponse['message']);
+      final isAuthenticated = await _authRepository.hasActiveSession();
+      if (isAuthenticated) {
+        final user = await _authRepository.getCurrentUser();
+        if (user != null) {
+          emit(AuthAuthenticated(user));
+          _startTokenVerification();
+        } else {
+          emit(AuthUnauthenticated());
+        }
+      } else {
+        emit(AuthUnauthenticated());
       }
-
-      final accessTokenResponse = await _getAccessToken(loginResponse['secret']);
-      if (!accessTokenResponse['success']) {
-        throw Exception(accessTokenResponse['message']);
-      }
-
-      final user = User(name: event.name); // Reemplaza con datos reales del usuario si están disponibles
-      emit(AuthLoginSuccess(user: user, token: accessTokenResponse['secret']));
     } catch (e) {
-      emit(AuthFailure(message: 'Login failed: ${e.toString()}'));
+      emit(AuthFailure(message: e.toString()));
     }
   }
 
-  void _onAuthLogoutRequested(AuthLogoutRequested event, Emitter<AuthState> emit) async {
-    developer.log('AuthLogoutRequested event triggered', name: 'AuthBloc');
-    emit(const AuthInProgress()); // Emit loading state for logout
-
+  /// Este método se encarga de iniciar sesión y emite el estado correspondiente.
+  /// 
+  /// 1. Intenta iniciar sesión con las credenciales proporcionadas
+  /// 2. Si el inicio de sesión es exitoso, obtiene el usuario actual y 
+  /// empieza la verificación periódica del token con [_startTokenVerification] 
+  /// 3. Si el inicio de sesión falla, emite un estado de error
+  /// 4. Si hay un error, emite un estado de error
+  /// 
+  /// Parametros:
+  /// [event] : Evento de inicio de sesión
+  /// [emit] : Función para emitir nuevos estados
+  ///  
+  FutureOr<void> _onAuthLoggedIn(
+      AuthLoggedIn event, Emitter<AuthState> emit) async {
+    
+    emit(AuthLoading());
     try {
-      // Llamar a la API de logout
-      await _logout(event.refreshToken);
-
-      // Emitir el estado inicial después de un logout exitoso
-      emit(const AuthInitial());
+      final loginResponse = await _authRepository.login(
+        event.username,
+        event.password,
+      );      
+      if (loginResponse.success) {
+        final user = await _authRepository.getCurrentUser();
+        if (user != null) {
+          emit(AuthAuthenticated(user));
+          _startTokenVerification();
+        } else {
+          emit(const AuthFailure(message: 'No se pudo obtener información del usuario'));
+        }
+      } else {
+        emit(AuthFailure(message: loginResponse.message));
+      }
     } catch (e) {
-      emit(AuthFailure(message: 'Logout failed: ${e.toString()}'));
+      emit(AuthFailure(message: e.toString()));
     }
   }
 
-  Future<Map<String, dynamic>> _login(String username, String password) async {
+  /// Este método se encarga de cerrar sesión y emite el estado correspondiente.
+  /// 
+  /// 1. Intenta cerrar sesión
+  /// 2. Si el cierre de sesión es exitoso, detiene la verificación del token
+  /// 3. Si el cierre de sesión falla, emite un estado de error
+  /// 4. Detiene la verificación del token con [_stopTokenVerification]
+  /// 
+  /// Parametros:
+  /// [event] : Evento de cierre de sesión
+  /// [emit] : Función para emitir nuevos estados
+  /// 
+  FutureOr<void> _onAuthLoggedOut(
+      AuthLoggedOut event, Emitter<AuthState> emit) async {
+    emit(AuthLoading());
     try {
-      final response = await _dio.post(
-        'http://192.168.100.145:8080/api/login',
-        data: {'username': username, 'password': password},
-        options: Options(headers: {'Content-Type': 'application/json'}),
-      );
-
-      return response.data;
+      await _authRepository.logout();
+      _stopTokenVerification();
+      emit(AuthUnauthenticated());
     } catch (e) {
-      if (e is DioException) {
-        throw Exception('Failed to login: ${e.response?.data ?? e.message}');
-      }
-      throw Exception('Unexpected error: $e');
+      emit(AuthFailure(message: e.toString()));
     }
   }
-
-  Future<Map<String, dynamic>> _getAccessToken(String refreshToken) async {
-    try {
-      final response = await _dio.post(
-        'http://192.168.100.145:8080/api/token/user-access',
-        options: Options(
-          headers: {
-            'Content-Type': 'application/json',
-            'X-JOKO-AUTH': refreshToken, // Pasar el refresh token en este encabezado
-          },
-        ),
-      );
-
-      return response.data;
-    } catch (e) {
-      if (e is DioException) {
-        throw Exception('Failed to get access token: ${e.response?.data ?? e.message}');
-      }
-      throw Exception('Unexpected error: $e');
-    }
+  
+  /// Este método se encarga de manejar el evento de token inválido.
+  /// 
+  /// 1. Emite un estado de error indicando que la sesión ha expirado
+  /// 2. Espera 2 segundos antes de emitir un estado de no autenticado
+  /// 3. Limpia los tokens almacenados
+  /// 
+  /// Parametros:
+  /// [event] : Evento de token inválido
+  /// [emit] : Función para emitir nuevos estados
+  /// 
+  FutureOr<void> _onAuthTokenInvalidated(
+      AuthTokenInvalidated event, Emitter<AuthState> emit) async {
+    emit(const AuthFailure(message: 'La sesión ha expirado. Por favor, inicie sesión nuevamente.'));
+    await Future.delayed(const Duration(seconds: 2));
+    emit(AuthUnauthenticated());
+    await _authRepository.logout();
   }
 
-  Future<void> _logout(String refreshToken) async {
-    try {
-      final response = await _dio.post(
-        'http://192.168.100.145:8080/api/logout',
-        options: Options(
-          headers: {
-            'Content-Type': 'application/json',
-            'X-JOKO-AUTH': refreshToken, // Pasar el refresh token en este encabezado
-          },
-        ),
-      );
 
-      if (response.statusCode != 200) {
-        throw Exception('Logout failed: ${response.data}');
-      }
-    } catch (e) {
-      if (e is DioException) {
-        throw Exception('Failed to logout: ${e.response?.data ?? e.message}');
-      }
-      throw Exception('Unexpected error: $e');
-    }
+  @override
+  Future<void> close() {
+    _tokenInvalidSubscription?.cancel();
+    _stopTokenVerification();
+    _authRepository.dispose();
+    return super.close();
   }
 }

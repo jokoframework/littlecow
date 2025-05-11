@@ -1,25 +1,39 @@
-import 'package:littlecow/model/user_model.dart';
+import 'package:equatable/equatable.dart';
+import 'package:littlecow/models/user_model.dart';
+///Estados posibles para el manejo de la autenticación.
+///
+/// [AuthInitial] - Estado inicial de la autenticación.
+/// [AuthLoading] - Estado de carga, cuando se está procesando la autenticación.
+/// [AuthAuthenticated] - Estado cuando el usuario ha sido autenticado.
+/// [AuthUnauthenticated] - Estado cuando el usuario no está autenticado.
+/// [AuthFailure] - Estado de error, cuando ocurre un problema durante la autenticación.
 
-sealed class AuthState {
+abstract class AuthState extends Equatable {
   const AuthState();
+
+  @override
+  List<Object?> get props => [];
 }
 
-class AuthInitial extends AuthState {
-  const AuthInitial();
-}
+class AuthInitial extends AuthState {}
 
-class AuthInProgress extends AuthState {
-  const AuthInProgress();
-}
+class AuthLoading extends AuthState {}
 
-class AuthLoginSuccess extends AuthState {
+class AuthAuthenticated extends AuthState {
   final User user;
-  final String token;
 
-  const AuthLoginSuccess({required this.user, required this.token});
+  const AuthAuthenticated(this.user);
+
+  @override
+  List<Object> get props => [user];
 }
+
+class AuthUnauthenticated extends AuthState {}
+
 class AuthFailure extends AuthState {
   final String message;
-
   const AuthFailure({required this.message});
+
+  @override
+  List<Object> get props => [message];
 }
