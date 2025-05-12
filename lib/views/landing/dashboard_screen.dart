@@ -1,12 +1,15 @@
 import 'dart:developer' as developer;
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
 import '../../controller/bloc/dashboard_bloc.dart';
 import '../../controller/bloc/auth_bloc.dart';
+import '../../controller/bloc/notification_bloc.dart';
 import '../../controller/events/auth_event.dart';
+import '../../controller/events/notification_event.dart';
 import '../../controller/states/auth_state.dart';
+import '../../controller/states/notification_state.dart';
+import '../../presentation/widgets/badge_notification_icon.dart';
+import '../../views/notifications/notifications_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -17,6 +20,10 @@ class DashboardScreen extends StatelessWidget {
     // Obtenemos el usuario autenticado del estado del AuthBloc
     final authState = context.watch<AuthBloc>().state;
     
+    if (authState is AuthAuthenticated && 
+        context.read<NotificationBloc>().state is! NotificationLoaded) {
+      context.read<NotificationBloc>().add(FetchNotifications(userId: authState.user.name));
+    }    
     if (authState is AuthAuthenticated) {
       developer.log('User authenticated: ${authState.user.name}', name: 'DashboardScreen');
     } else if (authState is AuthLoading) {
@@ -28,19 +35,32 @@ class DashboardScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Dashboard'),
         actions: [
-          // Añadimos botón de notificaciones y logout
-          IconButton(
-            icon: const Icon(Icons.notifications),
-            onPressed: () {
-              // Disparar el evento para cerrar sesión
-              context.read<AuthBloc>().add(AuthLoggedOut());
-            },
-            tooltip: 'Notificaciones',
-          ),
+          // Añadimos botón de notificaciones con badge
+          if (authState is AuthAuthenticated)
+            BlocBuilder<NotificationBloc, NotificationState>(
+              builder: (context, notificationState) {
+                int unreadCount = 0;
+                
+                if (notificationState is NotificationLoaded) {
+                  unreadCount = notificationState.notifications
+                      .where((notification) => !notification.isRead)
+                      .length;
+                }
+                return BadgeNotificationIcon(
+                  hasNotification: unreadCount > 0,
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => NotificationsScreen(user: authState.user),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () {
-              // Disparar el evento para cerrar sesión
               context.read<AuthBloc>().add(AuthLoggedOut());
             },
             tooltip: 'Cerrar sesión',
