@@ -6,6 +6,7 @@ import 'package:littlecow/controller/events/auth_event.dart';
 import 'package:littlecow/controller/states/auth_state.dart';
 import 'controller/bloc/auth_bloc.dart';
 import 'controller/bloc/dashboard_bloc.dart';
+import 'controller/bloc/notification_bloc.dart';
 import 'package:littlecow/presentation/widgets/app_snackbar.dart';
 
 void main() {
@@ -24,6 +25,9 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider<DashboardBloc>(
           create: (context) => DashboardBloc(),
+        ),
+        BlocProvider<NotificationBloc>(
+          create: (context) => NotificationBloc(),
         ),
       ],
       child: MaterialApp(
