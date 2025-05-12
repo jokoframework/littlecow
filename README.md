@@ -21,12 +21,30 @@ cd littlecow
 # 2. Limpiar el proyecto 
 flutter clean
 
-# 2. Instalar dependencias
+# 3. Instalar dependencias
 flutter pub get
 
-# 3. Ejecutar (usar tu dispositivo conectado o emulador)
+# 4. Ejecutar (usar tu dispositivo conectado o emulador)
 flutter run
 ```
+
+### Ejecutar en Linux Desktop
+Para ejecutar específicamente en tu escritorio Linux, sigue estos pasos:
+
+```bash
+# 1. Verificar las dependencias necesarias para desarrollo en Linux
+sudo apt-get update
+sudo apt-get install clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
+```
+```bash
+# 2. Habilitar soporte para Linux (si aún no está habilitado)
+flutter config --enable-linux-desktop
+```
+```bash
+# 3. Ejecutar específicamente para Linux desktop
+flutter run -d linux
+```
+
 ## Capturas de Pantalla
 
 ### Pantalla de Login
