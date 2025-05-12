@@ -13,6 +13,10 @@ class ApiRoutes {
   static const String posts = '$baseUrl/secure/posts';
   static String getPostById(String postId) => '$posts/$postId';
   
+  // Endpoints para notificaciones
+  static const String notifications = '$baseUrl/notifications';
+  static String getUserNotifications(String userId) => '$notifications/user/$userId';
+  
   /// Método para obtener el encabezado de autenticación
   static Map<String, String> getAuthHeader(String token) {
     return {'X-JOKO-AUTH': token};
