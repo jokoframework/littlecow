@@ -23,9 +23,15 @@ class NotificationLoaded extends NotificationState {
 
 class NotificationError extends NotificationState {
   final String message;
+  final String? operationType; // Tipo de operación: 'fetch', 'mark_read', etc.
+  final String? notificationId; // ID de la notificación afectada
 
-  const NotificationError({required this.message});
+  const NotificationError({
+    required this.message,
+    this.operationType,
+    this.notificationId,
+  });
 
   @override
-  List<Object?> get props => [message];
+  List<Object?> get props => [message, operationType, notificationId];
 }

@@ -16,25 +16,45 @@ class NotificationsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (context) => NotificationBloc()..add(FetchNotifications(userId: user.name)),
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Notificaciones'),
-          actions: [
-            BlocBuilder<NotificationBloc, NotificationState>(
-              builder: (context, state) {
-                return IconButton(
-                  icon: const Icon(Icons.refresh),
+      child: BlocListener<NotificationBloc, NotificationState>(
+        listener: (context, state) {
+          if (state is NotificationError && state.operationType != 'mark_read') {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Error: ${state.message}'),
+                backgroundColor: Colors.red,
+                duration: const Duration(seconds: 3),
+                action: SnackBarAction(
+                  label: 'Reintentar',
                   onPressed: () {
                     context.read<NotificationBloc>().add(
-                          NotificationRefresh(userId: user.name),
+                          FetchNotifications(userId: user.name),
                         );
                   },
-                );
-              },
-            ),
-          ],
-        ),
-        body: BlocBuilder<NotificationBloc, NotificationState>(
+                ),
+              ),
+            );
+          }
+        },
+        child: Scaffold(
+          appBar: AppBar(
+            title: const Text('Notificaciones'),
+            actions: [
+              BlocBuilder<NotificationBloc, NotificationState>(
+                builder: (context, state) {
+                  return IconButton(
+                    icon: const Icon(Icons.refresh),
+                    onPressed: () {
+                      context.read<NotificationBloc>().add(
+                            NotificationRefresh(userId: user.name),
+                          );
+                    },
+                  );
+                }, 
+              ),
+            ],
+          ),
+          body: BlocBuilder<NotificationBloc, NotificationState>(
           builder: (context, state) {
             if (state is NotificationLoading) {
               return const Center(
@@ -104,6 +124,7 @@ class NotificationsScreen extends StatelessWidget {
           },
         ),
       ),
+      )
     );
   }
 }
