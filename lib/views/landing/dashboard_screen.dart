@@ -9,7 +9,7 @@ import '../../controller/events/notification_event.dart';
 import '../../controller/states/auth_state.dart';
 import '../../controller/states/notification_state.dart';
 import '../../presentation/widgets/badge_notification_icon.dart';
-import '../../views/notifications/notifications_screen.dart';
+import 'notification_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
