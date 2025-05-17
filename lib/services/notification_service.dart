@@ -53,12 +53,11 @@ class NotificationService {
         throw AuthException.tokenExpired();
       }
       final response = await _dio.put(
-        '${ApiRoutes.notifications}/$notificationId/read',
+        ApiRoutes.markNotificationAsRead(notificationId),
         options: Options(
           headers: ApiRoutes.getCommonHeaders(token: accessToken),
         ),
       );
-
       final baseResponse = JokoBaseResponse.fromJson(response.data);
       return baseResponse.success;
     } on DioException catch (e) {
