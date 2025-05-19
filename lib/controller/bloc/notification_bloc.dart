@@ -72,13 +72,34 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
           }
           return notification;
         }).toList();
-        
-        emit(NotificationLoaded(notifications: updatedNotifications));        
+        emit(NotificationLoaded(notifications: updatedNotifications));
+        // Se comenta porque no existe todavia el endPoint         
         await _notificationService.markNotificationAsRead(event.notificationId);        
       }
     } catch (e) {
-      // Si hay un error, no recargamos todas las notificaciones
-      // Simplemente mantenemos el estado actual para no confundir al usuario
+      final currentState = state;
+      if (currentState is NotificationLoaded) {
+        final revertedNotifications = currentState.notifications.map((notification) {
+          if (notification.id == event.notificationId) {
+            return NotificationModel(
+              id: notification.id,
+              title: notification.title,
+              message: notification.message,
+              type: notification.type,
+              isRead: false, 
+              createdAt: notification.createdAt,
+              channel: notification.channel,
+            );
+          }
+          return notification;
+        }).toList();
+        emit(NotificationLoaded(notifications: revertedNotifications));
+        emit(NotificationError(
+          message: 'Error al marcar la notificación como leída',
+          operationType: 'mark_read',
+          notificationId: event.notificationId,
+        ));
+      }
     }
   }
 }

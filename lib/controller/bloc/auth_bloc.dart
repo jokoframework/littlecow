@@ -155,6 +155,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   /// 
   FutureOr<void> _onAuthTokenInvalidated(
       AuthTokenInvalidated event, Emitter<AuthState> emit) async {
+         _stopTokenVerification();
     emit(const AuthFailure(message: 'La sesión ha expirado. Por favor, inicie sesión nuevamente.'));
     await Future.delayed(const Duration(seconds: 2));
     emit(AuthUnauthenticated());
