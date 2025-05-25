@@ -14,9 +14,10 @@ class ApiRoutes {
   static String getPostById(String postId) => '$posts/$postId';
   
   // Endpoints para notificaciones
+  static const String userFakeId = '1';
   static const String notifications = '$baseUrl/secure/notifications';
-  static String getUserNotifications(String userId) => '$notifications/user/$userId';
-  static String markNotificationAsRead(String notificationId) => '$notifications/read/$notificationId';
+  static String getUserNotifications(String userId) => '$notifications/user/$userFakeId';
+  static String markNotificationAsRead(String notificationId) => '$notifications/user/$userFakeId/read/$notificationId';
   
   /// Método para obtener el encabezado de autenticación
   static Map<String, String> getAuthHeader(String token) {
