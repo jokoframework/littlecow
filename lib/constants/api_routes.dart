@@ -1,21 +1,22 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 class ApiRoutes {
   /// URL base de la API
-  static const String baseUrl = 'http://localhost:8080/api';
+  static String baseUrl = dotenv.env['BASE_URL'] ?? 'https://api.example.com';
   
   // Endpoints de autenticación
-  static const String login = '$baseUrl/login';
-  static const String logout = '$baseUrl/logout';
-  static const String refreshToken = '$baseUrl/token/refresh';
-  static const String userAccess = '$baseUrl/token/user-access';
-  static const String tokenInfo = '$baseUrl/token/info';
+  static final String login = '$baseUrl/login';
+  static final String logout = '$baseUrl/logout';
+  static final String refreshToken = '$baseUrl/token/refresh';
+  static final String userAccess = '$baseUrl/token/user-access';
+  static final String tokenInfo = '$baseUrl/token/info';
   
   // Endpoints para posts
-  static const String posts = '$baseUrl/secure/posts';
+  static final String posts = '$baseUrl/secure/posts';
   static String getPostById(String postId) => '$posts/$postId';
   
   // Endpoints para notificaciones
   static const String userFakeId = '1';
-  static const String notifications = '$baseUrl/secure/notifications';
+  static final String notifications = '$baseUrl/secure/notifications';
   static String getUserNotifications(String userId) => '$notifications/user/$userFakeId';
   static String markNotificationAsRead(String notificationId) => '$notifications/user/$userFakeId/read/$notificationId';
   

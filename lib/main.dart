@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:littlecow/views/security/login_screen.dart';
 import 'package:littlecow/views/landing/dashboard_screen.dart';
 import 'package:littlecow/controller/events/auth_event.dart';
@@ -9,7 +10,8 @@ import 'controller/bloc/dashboard_bloc.dart';
 import 'controller/bloc/notification_bloc.dart';
 import 'package:littlecow/presentation/widgets/app_snackbar.dart';
 
-void main() {
+Future<void> main() async {
+  await dotenv.load(fileName: ".env");
   runApp(const MyApp());
 }
 
