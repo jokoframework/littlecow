@@ -1,20 +1,14 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:littlecow/controller/bloc/auth_bloc.dart';
-import 'package:littlecow/controller/events/auth_event.dart';
 import 'package:littlecow/controller/events/notification_event.dart';
 import 'package:littlecow/controller/states/notification_state.dart';
-import 'package:littlecow/core/errors/app_exception.dart';
+import 'package:littlecow/data/notifications_repository.dart';
 import 'package:littlecow/models/notifications/notification_model.dart';
-import 'package:littlecow/services/notification_service.dart';
 import 'package:watch_it/watch_it.dart';
 
 class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
-  final NotificationService _notificationService;
-  final _authBloc = di<AuthBloc>();
+  final  _notificationsRepository = di<NotificationsRepository>();
 
-  NotificationBloc({NotificationService? notificationService})
-      : _notificationService = notificationService ?? NotificationService(),
-        super(NotificationInitial()) {
+  NotificationBloc() :  super(NotificationInitial()) {
     on<FetchNotifications>(_onFetchNotifications);
     on<NotificationRefresh>(_onNotificationRefresh);
     on<MarkNotificationAsRead>(_onMarkNotificationAsRead);
@@ -27,14 +21,11 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     emit(NotificationLoading());
 
     try {
-      final response = await _notificationService.getUserNotifications(event.userId);
+      final response = await _notificationsRepository.getUserNotifications(event.userId);
       if (response.success) {
         emit(NotificationLoaded(notifications: response.notifications));
       }
     } catch (e) {
-      if(e== AuthException.sessionExpired()){
-        _authBloc.add(AuthTokenInvalidated());
-      }
       emit(NotificationError(message: e.toString()));
     }
   }
@@ -44,7 +35,7 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     Emitter<NotificationState> emit,
   ) async {
     try {
-      final response = await _notificationService.getUserNotifications(event.userId);
+      final response = await _notificationsRepository.getUserNotifications(event.userId);
       
       if (response.success) {
         emit(NotificationLoaded(notifications: response.notifications));
@@ -79,7 +70,7 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
         }).toList();
         emit(NotificationLoaded(notifications: updatedNotifications));
         // Se comenta porque no existe todavia el endPoint         
-        await _notificationService.markNotificationAsRead(event.notificationId);        
+        await _notificationsRepository.markNotificationAsRead(event.notificationId);        
       }
     } catch (e) {
       final currentState = state;

@@ -26,7 +26,13 @@ class MyApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider<AuthBloc>(
-          create: (context) => AuthBloc()..add(AuthCheckRequested()),
+          // Inicializar AuthBloc y verificar autenticación inmediatamente
+          create: (context) {
+            final bloc = AuthBloc();
+            // Verificar estado de autenticación al inicio
+            bloc.add(AuthCheckRequested());
+            return bloc;
+          },
         ),
         BlocProvider<DashboardBloc>(
           create: (context) => DashboardBloc(),
@@ -48,8 +54,7 @@ class MyApp extends StatelessWidget {
                 context: context,
                 message: state.message,
                 duration: const Duration(seconds: 4),
-              );
-              
+              ); 
               if (state.message.contains('sesión ha expirado')) {
                 Navigator.of(context).popUntil((route) => route.isFirst);
               }
@@ -65,9 +70,6 @@ class MyApp extends StatelessWidget {
               return const DashboardScreen();
             }
             if (state is AuthUnauthenticated) {
-              return const LoginScreen();
-            }
-            if (state is AuthFailure) {
               return const LoginScreen();
             }
             return const LoginScreen();

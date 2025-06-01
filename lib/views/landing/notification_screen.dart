@@ -4,9 +4,11 @@ import 'package:intl/intl.dart';
 import 'package:littlecow/controller/bloc/notification_bloc.dart';
 import 'package:littlecow/controller/events/notification_event.dart';
 import 'package:littlecow/controller/states/notification_state.dart';
+import 'package:littlecow/controller/bloc/auth_bloc.dart';
+import 'package:littlecow/controller/events/auth_event.dart';
 import 'package:littlecow/models/notifications/notification_model.dart';
 import 'package:littlecow/models/user_model.dart';
-import 'package:littlecow/views/security/login_screen.dart';
+import 'package:littlecow/presentation/widgets/app_snackbar.dart';
 
 class NotificationsScreen extends StatelessWidget {
   final User user;
@@ -20,10 +22,8 @@ class NotificationsScreen extends StatelessWidget {
       listener: (context, state) {
         if (state is NotificationError) {
           if (state.message == 'La sesión ha expirado') {
-            Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(builder: (context) => const LoginScreen()),
-              (route) => false, 
-            );
+            context.read<AuthBloc>().add(AuthTokenInvalidated());
+            Navigator.of(context).popUntil((route) => route.isFirst);
           } else if (state.operationType != 'mark_read') {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(

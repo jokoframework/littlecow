@@ -5,7 +5,6 @@ import '../../controller/bloc/dashboard_bloc.dart';
 import '../../controller/bloc/auth_bloc.dart';
 import '../../controller/bloc/notification_bloc.dart';
 import '../../controller/events/auth_event.dart';
-import '../../controller/events/notification_event.dart';
 import '../../controller/states/auth_state.dart';
 import '../../controller/states/notification_state.dart';
 import '../../presentation/widgets/badge_notification_icon.dart';
@@ -17,13 +16,8 @@ class DashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     developer.log('Building DashboardScreen', name: 'DashboardScreen');
-    // Obtenemos el usuario autenticado del estado del AuthBloc
     final authState = context.watch<AuthBloc>().state;
     
-    if (authState is AuthAuthenticated && 
-        context.read<NotificationBloc>().state is! NotificationLoaded) {
-      context.read<NotificationBloc>().add(FetchNotifications(userId: authState.user.name));
-    }    
     if (authState is AuthAuthenticated) {
       developer.log('User authenticated: ${authState.user.name}', name: 'DashboardScreen');
     } else if (authState is AuthLoading) {
@@ -35,7 +29,6 @@ class DashboardScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Dashboard'),
         actions: [
-          // Añadimos botón de notificaciones con badge
           if (authState is AuthAuthenticated)
             BlocBuilder<NotificationBloc, NotificationState>(
               builder: (context, notificationState) {

@@ -35,7 +35,7 @@ class LoginScreenState extends State<LoginScreen> {
   /// Método para manejar el error de autenticación
   ///   
   _handleError(AuthState state) {
-    if (state is AuthFailure) {
+    if (state  is AuthFailure) {
       AppSnackBar.showError(
         context: context,
         message: state.message,

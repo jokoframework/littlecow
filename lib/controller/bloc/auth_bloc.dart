@@ -4,53 +4,69 @@ import 'package:flutter/material.dart';
 import 'package:littlecow/controller/events/auth_event.dart';
 import 'package:littlecow/controller/states/auth_state.dart';
 import 'package:littlecow/data/auth_repository.dart';
+import 'package:watch_it/watch_it.dart';
 
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
-  final AuthRepository _authRepository;
+  final  _authRepository = di<AuthRepository>();
   StreamSubscription? _tokenInvalidSubscription;
   Timer? _tokenVerificationTimer;
   
-  AuthBloc({AuthRepository? authRepository}) 
-      : _authRepository = authRepository ?? AuthRepository(),
-        super(AuthInitial()) {
+  AuthBloc() : super(AuthInitial()) {
     on<AuthCheckRequested>(_onAuthCheckRequested);
     on<AuthLoggedIn>(_onAuthLoggedIn);
     on<AuthLoggedOut>(_onAuthLoggedOut);
     on<AuthTokenInvalidated>(_onAuthTokenInvalidated);
-    // Escucha el evento de token inválido y emite un estado correspondiente
-    _tokenInvalidSubscription = _authRepository.onTokenInvalid.listen(
-      (_) => add(AuthTokenInvalidated()),
-    );
+    _tokenInvalidSubscription = _authRepository.onTokenInvalid.listen((_) {
+      add(AuthTokenInvalidated());
+    });
   }
   /// Verificación periódica del token
   /// 
-  /// 1. Verica si el token es válido cada 5 minutos
-  /// 2. Si el token no es válido, emite un evento de token invalidado
+  /// 1. Verifica si el token es válido cada minuto
+  /// 2. Si el token no es válido, emite un evento de token invalidado y detiene el timer
   /// 3. Cancela cualquier timer existente antes de crear uno nuevo [_stopTokenVerification]
-  /// 4. Lanza una excepción en caso de error
+  /// 4. Solo verifica si el estado actual es AuthAuthenticated para evitar ciclos
   ///   
   void _startTokenVerification() {
+    if (state is !AuthAuthenticated) {
+      return;
+    }
     _stopTokenVerification();
-    _tokenVerificationTimer = Timer.periodic(const Duration(minutes: 1), (_) async {
+    _tokenVerificationTimer = Timer.periodic(const Duration(minutes: 1), (timer) async {
+      if (_tokenVerificationTimer != timer) {
+        debugPrint("Timer desactualizado, cancelando");
+        timer.cancel();
+        return;
+      }
+      if (state is! AuthAuthenticated) {
+        _stopTokenVerification();
+        return;
+      }
+      
       debugPrint("Verificando token...");
       try {
         final tokenInfo = await _authRepository.getTokenInfo();
         debugPrint("Token Info: ${tokenInfo?.userId}");
         if (tokenInfo == null || !tokenInfo.success) {
           debugPrint("Token inválido o no encontrado");
-          add(AuthTokenInvalidated());
+          _stopTokenVerification(); // Detener el timer primero
+          add(AuthTokenInvalidated()); // Luego enviar el evento
         }
       } catch (e) {
         debugPrint("Error al verificar el token: $e");
-        add(AuthTokenInvalidated());      
+        _stopTokenVerification(); 
+        add(AuthTokenInvalidated()); 
       }
     });
   }
-  /// Detiene la verificación periódica del token
+  /// Detiene la verificación periódica del token y asegura que se cancele adecuadamente
   void _stopTokenVerification() {
-    _tokenVerificationTimer?.cancel();
-    _tokenVerificationTimer = null;
+    if (_tokenVerificationTimer != null) {
+      debugPrint("Deteniendo timer de verificación de token");
+      _tokenVerificationTimer!.cancel();
+      _tokenVerificationTimer = null;
+    }
   }
 
   /// Este método se encarga de verificar si el usuario ya está autenticado
@@ -150,9 +166,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   
   /// Este método se encarga de manejar el evento de token inválido.
   /// 
-  /// 1. Emite un estado de error indicando que la sesión ha expirado
-  /// 2. Luego emite un estado de no autenticado para forzar la redirección al login
-  /// 3. Limpia los tokens almacenados
+  /// 1. Detiene INMEDIATAMENTE la verificación periódica del token
+  /// 2. Solo procede si el estado actual no es ya AuthUnauthenticated para evitar ciclos
+  /// 3. Emite un estado de error indicando que la sesión ha expirado
+  /// 4. Limpia los tokens almacenados
+  /// 5. Emite un estado de no autenticado para forzar la redirección al login
   /// 
   /// Parametros:
   /// [event] : Evento de token inválido
@@ -161,8 +179,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   FutureOr<void> _onAuthTokenInvalidated(
       AuthTokenInvalidated event, Emitter<AuthState> emit) async {
     _stopTokenVerification();
-    emit(const AuthFailure(message: 'La sesión ha expirado. Por favor, inicie sesión nuevamente.'));
-    await _authRepository.logout();
+    emit(const AuthFailure(message: 'La sesión ha expirado. Por favor, inicie sesión nuevamente.'));    
+    try {
+      await _authRepository.logout();
+    } on Exception catch (e) {
+      debugPrint(e.toString());
+    }
     emit(AuthUnauthenticated());
   }
 
