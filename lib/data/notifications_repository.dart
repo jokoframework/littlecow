@@ -24,7 +24,7 @@ class NotificationsRepository {
       // Obtener token válido del repositorio de autenticación
       final accessToken = await _authRepository.getValidAccessToken();
       if (accessToken == null || accessToken.isEmpty) {
-        throw AuthException.tokenExpired();
+        throw AuthException.sessionExpired();
       }
       
       // Llamar al servicio con el token obtenido
@@ -44,7 +44,7 @@ class NotificationsRepository {
       // Obtener token válido del repositorio de autenticación
       final accessToken = await _authRepository.getValidAccessToken();
       if (accessToken == null || accessToken.isEmpty) {
-        throw AuthException.tokenExpired();
+        throw AuthException.sessionExpired();
       }
       
       // Llamar al servicio con el token obtenido

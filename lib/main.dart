@@ -4,6 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:littlecow/core/di/locator_service.dart';
 import 'package:littlecow/views/security/login_screen.dart';
 import 'package:littlecow/views/landing/dashboard_screen.dart';
+import 'package:littlecow/views/security/connection_error_screen.dart';
 import 'package:littlecow/controller/events/auth_event.dart';
 import 'package:littlecow/controller/states/auth_state.dart';
 import 'controller/bloc/auth_bloc.dart';
@@ -26,10 +27,8 @@ class MyApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider<AuthBloc>(
-          // Inicializar AuthBloc y verificar autenticación inmediatamente
           create: (context) {
             final bloc = AuthBloc();
-            // Verificar estado de autenticación al inicio
             bloc.add(AuthCheckRequested());
             return bloc;
           },
@@ -47,17 +46,33 @@ class MyApp extends StatelessWidget {
           primarySwatch: Colors.blue,
           visualDensity: VisualDensity.adaptivePlatformDensity,
         ),
+        routes: {
+          '/login': (context) => const LoginScreen(),
+          '/dashboard': (context) => const DashboardScreen(),
+          '/connection-error': (context) => const ConnectionErrorScreen(),
+        },
         home: BlocConsumer<AuthBloc, AuthState>(
           listener: (context, state) {
             if (state is AuthFailure) {
+              switch (state.errorType) {
+                case AuthErrorType.sessionExpired:
+                  Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+                  break;
+                case AuthErrorType.invalidCredentials:
+                  break;
+                case AuthErrorType.connectionError:
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (context) => const ConnectionErrorScreen()),
+                    (route) => false,
+                  );
+                  break;
+                case AuthErrorType.unknown:
+                  break;
+              }
               AppSnackBar.showError(
                 context: context,
                 message: state.message,
-                duration: const Duration(seconds: 4),
-              ); 
-              if (state.message.contains('sesión ha expirado')) {
-                Navigator.of(context).popUntil((route) => route.isFirst);
-              }
+              );
             }
           },
           builder: (context, state) {

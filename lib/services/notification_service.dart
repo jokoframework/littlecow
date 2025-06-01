@@ -21,7 +21,7 @@ class NotificationService {
   Future<NotificationsResponse> getUserNotifications(String userId, String accessToken) async {
     try {
       if (accessToken.isEmpty) {
-        throw AuthException.tokenExpired();
+        throw AuthException.sessionExpired();
       }
       final response = await _dio.get(
         ApiRoutes.getUserNotifications(userId),
@@ -46,7 +46,7 @@ class NotificationService {
   Future<bool> markNotificationAsRead(String notificationId, String accessToken) async {
     try {
       if (accessToken.isEmpty) {
-        throw AuthException.tokenExpired();
+        throw AuthException.sessionExpired();
       }
       final response = await _dio.put(
         ApiRoutes.markNotificationAsRead(notificationId),

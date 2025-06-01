@@ -18,9 +18,22 @@ class User extends Equatable {
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
+    if (json['username'] != null && json['name'] == null) {
+      return User(
+        name: json['username'], 
+        email: json['username'], 
+        id: json['id']?.toString(),
+        role: json['role'],
+        lastName: json['lastName'],
+        lastAccessDate: json['lastAccessDate'] != null 
+            ? DateTime.tryParse(json['lastAccessDate'])
+            : null,
+      );
+    }
+    
     return User(
       name: json['name'] ?? '',
-      email: json['email'] ?? json['username'], // Handle both email or username
+      email: json['email'] ?? json['username'], 
       id: json['id']?.toString(),
       role: json['role'],
       lastName: json['lastName'],

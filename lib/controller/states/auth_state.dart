@@ -8,6 +8,14 @@ import 'package:littlecow/models/user_model.dart';
 /// [AuthUnauthenticated] - Estado cuando el usuario no está autenticado.
 /// [AuthFailure] - Estado de error, cuando ocurre un problema durante la autenticación.
 
+/// Tipos de errores de autenticación
+enum AuthErrorType {
+  invalidCredentials,
+  sessionExpired,
+  connectionError,
+  unknown
+}
+
 abstract class AuthState extends Equatable {
   const AuthState();
 
@@ -32,8 +40,13 @@ class AuthUnauthenticated extends AuthState {}
 
 class AuthFailure extends AuthState {
   final String message;
-  const AuthFailure({required this.message});
+  final AuthErrorType errorType;
+
+  const AuthFailure({
+    required this.message, 
+    this.errorType = AuthErrorType.unknown,
+  });
 
   @override
-  List<Object> get props => [message];
+  List<Object> get props => [message, errorType];
 }

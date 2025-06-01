@@ -4,6 +4,7 @@ import 'package:littlecow/constants/api_routes.dart';
 import 'package:littlecow/core/errors/app_exception.dart';
 import 'package:littlecow/models/token_info_response.dart';
 import 'package:littlecow/models/token_response.dart';
+import 'package:littlecow/models/user_response.dart';
 import 'package:littlecow/core/errors/exception_handler.dart';
 
 /// Metodos de la clase [AuthService]
@@ -129,13 +130,6 @@ class AuthService{
         queryParameters: {'accessToken': accessToken},
       );
       final tokenInfo = JokoTokenInfoResponse.fromJson(response.data);
-      if (!tokenInfo.success) {
-        if (tokenInfo.errorCode == 'token_expired') {
-          _tokenInvalidController.add(null);
-          throw AuthException.sessionExpired();
-        }
-        throw AuthException(message: tokenInfo.message);
-      }
       return tokenInfo;
     } on DioException catch (e) {
       if (e.response?.statusCode == 401) {
@@ -147,6 +141,35 @@ class AuthService{
     }
   }
   
+  /// Obtiene información detallada del usuario
+  /// 
+  /// 1. Realiza una petición GET para obtener información del usuario.
+  /// 2. Si la respuesta es exitosa, devuelve la información del usuario.
+  /// 3. Si el token es inválido, notifica a través del stream.
+  Future<UserResponse> getUserInfo(String accessToken, String username) async {
+    try {
+      if (accessToken.isEmpty) {
+        _tokenInvalidController.add(null);
+        throw AuthException.sessionExpired();
+      }
+      final response = await _dio.get(
+        ApiRoutes.userInfo(username),
+        options: Options(
+          headers: ApiRoutes.getCommonHeaders(token: accessToken),
+        ),
+      );
+      final userInfo = UserResponse.fromJson(response.data);
+      return userInfo;
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        _tokenInvalidController.add(null);
+      }
+      throw ExceptionHandler.handleDioException(e);
+    } catch (e) {
+      throw ExceptionHandler.handle(e);
+    }
+  }
+
   /// Liberar recursos cuando ya no se necesite el servicio
   void dispose() {
     _tokenInvalidController.close();

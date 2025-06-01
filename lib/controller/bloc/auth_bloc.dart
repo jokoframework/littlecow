@@ -35,7 +35,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     _stopTokenVerification();
     _tokenVerificationTimer = Timer.periodic(const Duration(minutes: 1), (timer) async {
       if (_tokenVerificationTimer != timer) {
-        debugPrint("Timer desactualizado, cancelando");
         timer.cancel();
         return;
       }
@@ -47,11 +46,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       debugPrint("Verificando token...");
       try {
         final tokenInfo = await _authRepository.getTokenInfo();
-        debugPrint("Token Info: ${tokenInfo?.userId}");
         if (tokenInfo == null || !tokenInfo.success) {
           debugPrint("Token inválido o no encontrado");
-          _stopTokenVerification(); // Detener el timer primero
-          add(AuthTokenInvalidated()); // Luego enviar el evento
+          _stopTokenVerification(); 
+          add(AuthTokenInvalidated());
         }
       } catch (e) {
         debugPrint("Error al verificar el token: $e");
@@ -100,7 +98,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         emit(AuthUnauthenticated());
       }
     } catch (e) {
-      emit(AuthFailure(message: e.toString()));
+      emit(AuthFailure(
+        message: e.toString(),
+        errorType: AuthErrorType.connectionError,
+      ));
     }
   }
 
@@ -131,13 +132,22 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           emit(AuthAuthenticated(user));
           _startTokenVerification();
         } else {
-          emit(const AuthFailure(message: 'No se pudo obtener información del usuario'));
+          emit(const AuthFailure(
+            message: 'No se pudo obtener información del usuario',
+            errorType: AuthErrorType.unknown
+          ));
         }
       } else {
-        emit(AuthFailure(message: loginResponse.message));
+        emit(AuthFailure(
+          message: loginResponse.message, 
+          errorType: AuthErrorType.invalidCredentials
+        ));
       }
     } catch (e) {
-      emit(AuthFailure(message: e.toString()));
+      emit(AuthFailure(
+        message: e.toString(),
+        errorType: AuthErrorType.connectionError
+      ));
     }
   }
 
@@ -160,7 +170,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       _stopTokenVerification();
       emit(AuthUnauthenticated());
     } catch (e) {
-      emit(AuthFailure(message: e.toString()));
+      emit(AuthFailure(
+        message: e.toString(),
+        errorType: AuthErrorType.connectionError
+      ));
     }
   }
   
@@ -179,7 +192,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   FutureOr<void> _onAuthTokenInvalidated(
       AuthTokenInvalidated event, Emitter<AuthState> emit) async {
     _stopTokenVerification();
-    emit(const AuthFailure(message: 'La sesión ha expirado. Por favor, inicie sesión nuevamente.'));    
+    emit(const AuthFailure(
+      message: 'La sesión ha expirado. Por favor, inicie sesión nuevamente.',
+      errorType: AuthErrorType.sessionExpired
+    ));    
     try {
       await _authRepository.logout();
     } on Exception catch (e) {

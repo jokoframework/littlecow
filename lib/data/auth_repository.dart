@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:littlecow/core/errors/app_exception.dart';
 import 'package:littlecow/core/errors/exception_handler.dart';
 import 'package:littlecow/data/secure_storage_service.dart';
@@ -29,7 +30,6 @@ class AuthRepository {
     try {
       final loginResponse = await _authService.login(username, password);
       if (loginResponse.success) {
-        // Guardar token de refresco y nombre de usuario en el almacenamiento seguro
         await _secureStorage.saveRefreshToken(loginResponse.secret);
         await _secureStorage.saveUsername(username);
       }
@@ -43,6 +43,12 @@ class AuthRepository {
   /// 
   /// Devuelve un [User] si hay un usuario autenticado.
   /// Lanza AppException en caso de error.
+  /// 
+  /// 1. Primero verifica si hay un token válido
+  /// 2. Si encuentra datos del usuario en el almacenamiento local, los devuelve
+  /// 3. De lo contrario, obtiene el nombre de usuario y realiza una petición a la API
+  /// 4. Si la petición a la API falla, utiliza los datos del token como respaldo
+  /// 5. Almacena los datos del usuario para futura referencia
   Future<User?> getCurrentUser() async {
     try {
       final accessToken = await getValidAccessToken();
@@ -50,13 +56,27 @@ class AuthRepository {
         return null;
       }
       
-      // Primero intentar obtener el usuario del almacenamiento
-      final user = await _secureStorage.getUserData();
-      if (user != null) {
-        return user;
+      final cachedUser = await _secureStorage.getUserData();
+      if (cachedUser != null) {
+        return cachedUser;
       }
       
-      // Si no hay usuario almacenado, obtener la información del token
+      final username = await _secureStorage.getUsername();
+      
+      if (username != null && username.isNotEmpty) {
+        try {
+          final userResponse = await _authService.getUserInfo(accessToken, username);
+          
+          if (userResponse.success && userResponse.user != null) {
+            await _secureStorage.saveUserData(userResponse.user!);
+            return userResponse.user;
+          }
+        } catch (e) {
+          debugPrint ('Error obteniendo usuario por nombre: $e');
+        }
+      }
+      
+      // Plan de respaldo: usar la información del token
       final tokenInfo = await getTokenInfo();
       if (tokenInfo != null && tokenInfo.success) {
         final newUser = User(
@@ -124,29 +144,20 @@ class AuthRepository {
   /// Si el token está expirado, intenta refrescarlo automáticamente
   Future<String?> getValidAccessToken() async {
     try {
-      // Verificar si hay un token existente y si es válido
-      final accessToken = await _secureStorage.getAccessToken();
-      
-      // Si no hay token, no hay necesidad de verificar expiración
+      final accessToken = await _secureStorage.getAccessToken();      
       if (accessToken == null || accessToken.isEmpty) {
         return await refreshAccessToken();
-      }
-      
-      // Verificar expiración solo si hay un token
+      }      
       try {
-        final tokenExpired = await isAccessTokenExpired();
-        
+        final tokenExpired = await isAccessTokenExpired(); 
         if (!tokenExpired) {
           return accessToken;
         }
       } catch (_) {
         // Si hay un error verificando la expiración, intentar refrescar de todos modos
-      }
-      
-      // Si el token ha expirado o hubo un error, intentar renovarlo
+      }      
       return await refreshAccessToken();
     } catch (e) {
-      // Solo emitir el evento de token inválido una vez
       _tokenInvalidController.add(null);
       return null;
     }
@@ -158,7 +169,6 @@ class AuthRepository {
   static bool _hasNotifiedInvalid = false;
   
   Future<String?> refreshAccessToken() async {
-    // Evitar múltiples intentos de refrescar el token al mismo tiempo
     if (_isRefreshing) {
       return null;
     }
@@ -214,29 +224,20 @@ class AuthRepository {
   /// Lanza AppException en caso de error.
   Future<JokoTokenInfoResponse?> getTokenInfo() async {
     try {
-      // Primero intenta obtener el token sin refrescarlo
       final accessToken = await _secureStorage.getAccessToken();
-      
-      // Si no hay token almacenado, no hay necesidad de verificar más
       if (accessToken == null || accessToken.isEmpty) {
         throw AuthException.sessionExpired();
-      }
-      
-      // Solo si hay un token, verificar su validez
+      }      
       try {
         final tokenInfo = await _authService.getTokenInfo(accessToken);
         return tokenInfo;
-      } on AuthException catch (e) {
-        // Si es un error específico de autenticación, propagarlo
-        throw e;
+      } on AuthException {
+        rethrow;
       } catch (e) {
-        // Solo intentar refrescar si hubo otro tipo de error
         final newAccessToken = await refreshAccessToken();
         if (newAccessToken == null || newAccessToken.isEmpty) {
           throw AuthException.sessionExpired();
-        }
-        
-        // Intentar nuevamente con el token refrescado
+        }        
         return await _authService.getTokenInfo(newAccessToken);
       }
     } catch (e) {

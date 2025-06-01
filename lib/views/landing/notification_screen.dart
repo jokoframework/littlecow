@@ -8,7 +8,6 @@ import 'package:littlecow/controller/bloc/auth_bloc.dart';
 import 'package:littlecow/controller/events/auth_event.dart';
 import 'package:littlecow/models/notifications/notification_model.dart';
 import 'package:littlecow/models/user_model.dart';
-import 'package:littlecow/presentation/widgets/app_snackbar.dart';
 
 class NotificationsScreen extends StatelessWidget {
   final User user;
@@ -17,7 +16,7 @@ class NotificationsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    context.read<NotificationBloc>().add(FetchNotifications(userId: user.name));
+    context.read<NotificationBloc>().add(FetchNotifications(userId: user.id!));
     return BlocConsumer<NotificationBloc, NotificationState>(
       listener: (context, state) {
         if (state is NotificationError) {
@@ -34,7 +33,7 @@ class NotificationsScreen extends StatelessWidget {
                   label: 'Reintentar',
                   onPressed: () {
                     context.read<NotificationBloc>().add(
-                          FetchNotifications(userId: user.name),
+                          FetchNotifications(userId: user.id!),
                         );
                   },
                 ),
@@ -54,7 +53,7 @@ class NotificationsScreen extends StatelessWidget {
                     icon: const Icon(Icons.refresh),
                     onPressed: () {
                       context.read<NotificationBloc>().add(
-                            NotificationRefresh(userId: user.name),
+                            NotificationRefresh(userId: user.id!),
                           );
                     },
                   );
@@ -81,7 +80,7 @@ class NotificationsScreen extends StatelessWidget {
                 return RefreshIndicator(
                   onRefresh: () async {
                     context.read<NotificationBloc>().add(
-                          NotificationRefresh(userId: user.name),
+                          NotificationRefresh(userId: user.id!),
                         );
                   },
                   child: ListView.builder(

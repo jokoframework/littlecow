@@ -9,6 +9,7 @@ class ApiRoutes {
   static final String refreshToken = '$baseUrl/token/refresh';
   static final String userAccess = '$baseUrl/token/user-access';
   static final String tokenInfo = '$baseUrl/token/info';
+  static String userInfo(String username) => '$baseUrl/secure/users/$username';
   
   // Endpoints para posts
   static final String posts = '$baseUrl/secure/posts';
@@ -17,7 +18,7 @@ class ApiRoutes {
   // Endpoints para notificaciones
   static const String userFakeId = '1';
   static final String notifications = '$baseUrl/secure/notifications';
-  static String getUserNotifications(String userId) => '$notifications/user/$userFakeId';
+  static String getUserNotifications(String userId) => '$notifications/user/$userId';
   static String markNotificationAsRead(String notificationId) => '$notifications/user/$userFakeId/read/$notificationId';
   
   /// Método para obtener el encabezado de autenticación

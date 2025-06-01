@@ -55,9 +55,7 @@ class AppSnackBar {
         action: SnackBarAction(
           label: 'Cerrar',
           textColor: Colors.white,
-          onPressed: () {
-            ScaffoldMessenger.of(context).hideCurrentSnackBar();
-          },
+          onPressed: () {}, 
         ),
       ),
     );
