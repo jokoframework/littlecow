@@ -19,7 +19,7 @@ class ApiRoutes {
   static const String userFakeId = '1';
   static final String notifications = '$baseUrl/secure/notifications';
   static String getUserNotifications(String userId) => '$notifications/user/$userId';
-  static String markNotificationAsRead(String notificationId) => '$notifications/user/$userFakeId/read/$notificationId';
+  static String markNotificationAsRead(String notificationId, String userId) => '$notifications/user/$userId/$notificationId';
   
   /// Método para obtener el encabezado de autenticación
   static Map<String, String> getAuthHeader(String token) {

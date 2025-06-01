@@ -39,16 +39,14 @@ class NotificationsRepository {
   /// [notificationId] es el identificador único de la notificación
   /// 
   /// Retorna true si se marcó correctamente, false en caso contrario
-  Future<bool> markNotificationAsRead(String notificationId) async {
+  Future<bool> markNotificationAsRead(String notificationId,String userId) async {
     try {
-      // Obtener token válido del repositorio de autenticación
       final accessToken = await _authRepository.getValidAccessToken();
       if (accessToken == null || accessToken.isEmpty) {
         throw AuthException.sessionExpired();
       }
       
-      // Llamar al servicio con el token obtenido
-      return await _notificationService.markNotificationAsRead(notificationId, accessToken);
+      return await _notificationService.markNotificationAsRead(notificationId, accessToken, userId);
     } catch (e) {
       throw ExceptionHandler.handle(e);
     }

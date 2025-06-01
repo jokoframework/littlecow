@@ -88,7 +88,7 @@ class NotificationsScreen extends StatelessWidget {
                     itemBuilder: (context, index) {
                       return _NotificationCard(
                         notification: notifications[index],
-                        userId: user.name,
+                        userId: user.id!,
                       );
                     },
                   ),

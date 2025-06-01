@@ -43,13 +43,13 @@ class NotificationService {
   /// [accessToken] es el token de acceso para autenticación
   /// 
   /// Retorna true si se marcó correctamente, false en caso contrario
-  Future<bool> markNotificationAsRead(String notificationId, String accessToken) async {
+  Future<bool> markNotificationAsRead(String notificationId, String accessToken, String userId) async {
     try {
       if (accessToken.isEmpty) {
         throw AuthException.sessionExpired();
       }
       final response = await _dio.put(
-        ApiRoutes.markNotificationAsRead(notificationId),
+        ApiRoutes.markNotificationAsRead(notificationId,userId),
         options: Options(
           headers: ApiRoutes.getCommonHeaders(token: accessToken),
         ),

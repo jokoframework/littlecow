@@ -69,8 +69,7 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
           return notification;
         }).toList();
         emit(NotificationLoaded(notifications: updatedNotifications));
-        // Se comenta porque no existe todavia el endPoint         
-        await _notificationsRepository.markNotificationAsRead(event.notificationId);        
+        await _notificationsRepository.markNotificationAsRead(event.notificationId, event.userId);        
       }
     } catch (e) {
       final currentState = state;
