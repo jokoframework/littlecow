@@ -6,6 +6,7 @@ import 'package:littlecow/controller/events/notification_event.dart';
 import 'package:littlecow/controller/states/notification_state.dart';
 import 'package:littlecow/models/notifications/notification_model.dart';
 import 'package:littlecow/models/user_model.dart';
+import 'package:littlecow/views/security/login_screen.dart';
 
 class NotificationsScreen extends StatelessWidget {
   final User user;
@@ -14,11 +15,16 @@ class NotificationsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => NotificationBloc()..add(FetchNotifications(userId: user.name)),
-      child: BlocListener<NotificationBloc, NotificationState>(
-        listener: (context, state) {
-          if (state is NotificationError && state.operationType != 'mark_read') {
+    context.read<NotificationBloc>().add(FetchNotifications(userId: user.name));
+    return BlocConsumer<NotificationBloc, NotificationState>(
+      listener: (context, state) {
+        if (state is NotificationError) {
+          if (state.message == 'La sesión ha expirado') {
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (context) => const LoginScreen()),
+              (route) => false, 
+            );
+          } else if (state.operationType != 'mark_read') {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('Error: ${state.message}'),
@@ -35,8 +41,10 @@ class NotificationsScreen extends StatelessWidget {
               ),
             );
           }
-        },
-        child: Scaffold(
+        }
+      },
+      builder: (context, state) {
+        return Scaffold(
           appBar: AppBar(
             title: const Text('Notificaciones'),
             actions: [
@@ -55,76 +63,48 @@ class NotificationsScreen extends StatelessWidget {
             ],
           ),
           body: BlocBuilder<NotificationBloc, NotificationState>(
-          builder: (context, state) {
-            if (state is NotificationLoading) {
-              return const Center(
-                child: CircularProgressIndicator(),
-              );
-            } else if (state is NotificationLoaded) {
-              final notifications = state.notifications;
-              if (notifications.isEmpty) {
+            builder: (context, state) {
+              if (state is NotificationLoading) {
                 return const Center(
-                  child: Text(
-                    'No tienes notificaciones',
-                    style: TextStyle(fontSize: 18),
+                  child: CircularProgressIndicator(),
+                );
+              } else if (state is NotificationLoaded) {
+                final notifications = state.notifications;
+                if (notifications.isEmpty) {
+                  return const Center(
+                    child: Text(
+                      'No tienes notificaciones',
+                      style: TextStyle(fontSize: 18),
+                    ),
+                  );
+                }
+                return RefreshIndicator(
+                  onRefresh: () async {
+                    context.read<NotificationBloc>().add(
+                          NotificationRefresh(userId: user.name),
+                        );
+                  },
+                  child: ListView.builder(
+                    itemCount: notifications.length,
+                    itemBuilder: (context, index) {
+                      return _NotificationCard(
+                        notification: notifications[index],
+                        userId: user.name,
+                      );
+                    },
                   ),
                 );
-              }
-              return RefreshIndicator(
-                onRefresh: () async {
-                  context.read<NotificationBloc>().add(
-                        NotificationRefresh(userId: user.name),
-                      );
-                },
-                child: ListView.builder(
-                  itemCount: notifications.length,
-                  itemBuilder: (context, index) {
-                    return _NotificationCard(
-                      notification: notifications[index],
-                      userId: user.name,
-                    );
-                  },
+              } 
+              return const Center(
+                child: Text(
+                  'Cargando notificaciones...',
+                  style: TextStyle(fontSize: 18),
                 ),
               );
-            } else if (state is NotificationError) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(
-                      Icons.error_outline,
-                      size: 60,
-                      color: Colors.red,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Error: ${state.message}',
-                      style: const TextStyle(fontSize: 18),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () {
-                        context.read<NotificationBloc>().add(
-                              FetchNotifications(userId: user.name),
-                            );
-                      },
-                      child: const Text('Reintentar'),
-                    ),
-                  ],
-                ),
-              );
-            }
-            return const Center(
-              child: Text(
-                'Cargando notificaciones...',
-                style: TextStyle(fontSize: 18),
-              ),
-            );
-          },
-        ),
-      ),
-      )
+            },
+          ),
+        );
+      },
     );
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:littlecow/core/di/locator_service.dart';
 import 'package:littlecow/views/security/login_screen.dart';
 import 'package:littlecow/views/landing/dashboard_screen.dart';
 import 'package:littlecow/controller/events/auth_event.dart';
@@ -11,7 +12,9 @@ import 'controller/bloc/notification_bloc.dart';
 import 'package:littlecow/presentation/widgets/app_snackbar.dart';
 
 Future<void> main() async {
+
   await dotenv.load(fileName: ".env");
+  initLocator();
   runApp(const MyApp());
 }
 
@@ -46,10 +49,14 @@ class MyApp extends StatelessWidget {
                 message: state.message,
                 duration: const Duration(seconds: 4),
               );
+              
+              if (state.message.contains('sesión ha expirado')) {
+                Navigator.of(context).popUntil((route) => route.isFirst);
+              }
             }
           },
           builder: (context, state) {
-            if (state is AuthInitial || state is AuthLoading) {
+            if (state is AuthLoading) {
               return const Scaffold(
                 body: Center(child: CircularProgressIndicator()),
               );
@@ -61,9 +68,6 @@ class MyApp extends StatelessWidget {
               return const LoginScreen();
             }
             if (state is AuthFailure) {
-              return const LoginScreen();
-            }
-            if (state is AuthTokenInvalidated) {
               return const LoginScreen();
             }
             return const LoginScreen();

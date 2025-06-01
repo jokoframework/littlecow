@@ -1,11 +1,16 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:littlecow/controller/bloc/auth_bloc.dart';
+import 'package:littlecow/controller/events/auth_event.dart';
 import 'package:littlecow/controller/events/notification_event.dart';
 import 'package:littlecow/controller/states/notification_state.dart';
+import 'package:littlecow/core/errors/app_exception.dart';
 import 'package:littlecow/models/notifications/notification_model.dart';
 import 'package:littlecow/services/notification_service.dart';
+import 'package:watch_it/watch_it.dart';
 
 class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
   final NotificationService _notificationService;
+  final _authBloc = di<AuthBloc>();
 
   NotificationBloc({NotificationService? notificationService})
       : _notificationService = notificationService ?? NotificationService(),
@@ -23,13 +28,13 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
 
     try {
       final response = await _notificationService.getUserNotifications(event.userId);
-      
       if (response.success) {
         emit(NotificationLoaded(notifications: response.notifications));
-      } else {
-        emit(NotificationError(message: response.message));
       }
     } catch (e) {
+      if(e== AuthException.sessionExpired()){
+        _authBloc.add(AuthTokenInvalidated());
+      }
       emit(NotificationError(message: e.toString()));
     }
   }

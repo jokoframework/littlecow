@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:bloc/bloc.dart';
+import 'package:flutter/material.dart';
 import 'package:littlecow/controller/events/auth_event.dart';
 import 'package:littlecow/controller/states/auth_state.dart';
 import 'package:littlecow/data/auth_repository.dart';
@@ -31,13 +32,17 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ///   
   void _startTokenVerification() {
     _stopTokenVerification();
-    _tokenVerificationTimer = Timer.periodic(const Duration(minutes: 5), (_) async {
+    _tokenVerificationTimer = Timer.periodic(const Duration(minutes: 1), (_) async {
+      debugPrint("Verificando token...");
       try {
         final tokenInfo = await _authRepository.getTokenInfo();
+        debugPrint("Token Info: ${tokenInfo?.userId}");
         if (tokenInfo == null || !tokenInfo.success) {
+          debugPrint("Token inválido o no encontrado");
           add(AuthTokenInvalidated());
         }
       } catch (e) {
+        debugPrint("Error al verificar el token: $e");
         add(AuthTokenInvalidated());      
       }
     });
@@ -146,7 +151,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   /// Este método se encarga de manejar el evento de token inválido.
   /// 
   /// 1. Emite un estado de error indicando que la sesión ha expirado
-  /// 2. Espera 2 segundos antes de emitir un estado de no autenticado
+  /// 2. Luego emite un estado de no autenticado para forzar la redirección al login
   /// 3. Limpia los tokens almacenados
   /// 
   /// Parametros:
@@ -155,11 +160,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   /// 
   FutureOr<void> _onAuthTokenInvalidated(
       AuthTokenInvalidated event, Emitter<AuthState> emit) async {
-         _stopTokenVerification();
+    _stopTokenVerification();
     emit(const AuthFailure(message: 'La sesión ha expirado. Por favor, inicie sesión nuevamente.'));
-    await Future.delayed(const Duration(seconds: 2));
-    emit(AuthUnauthenticated());
     await _authRepository.logout();
+    emit(AuthUnauthenticated());
   }
 
 
