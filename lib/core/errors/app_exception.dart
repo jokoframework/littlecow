@@ -42,6 +42,8 @@ class AuthException extends AppException {
       details: error,
     );
   }
+
+  get errorType => null;
 }
 class NotificationException extends AppException {
   const NotificationException({

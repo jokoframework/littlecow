@@ -20,9 +20,11 @@ class NotificationsScreen extends StatelessWidget {
     return BlocConsumer<NotificationBloc, NotificationState>(
       listener: (context, state) {
         if (state is NotificationError) {
-          if (state.message == 'La sesión ha expirado') {
+          if (state.message == 'La sesión ha expirado' || state.message == 'Credenciales inválidas') {
+            debugPrint(state.message);
             context.read<AuthBloc>().add(AuthTokenInvalidated());
             Navigator.of(context).popUntil((route) => route.isFirst);
+
           } else if (state.operationType != 'mark_read') {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(

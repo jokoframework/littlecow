@@ -56,9 +56,10 @@ class MyApp extends StatelessWidget {
             if (state is AuthFailure) {
               switch (state.errorType) {
                 case AuthErrorType.sessionExpired:
-                  Navigator.of(context).pushNamedAndRemoveUntil('/login', (route) => false);
+                  Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
                   break;
                 case AuthErrorType.invalidCredentials:
+                  Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
                   break;
                 case AuthErrorType.connectionError:
                   Navigator.of(context).pushAndRemoveUntil(

@@ -28,8 +28,21 @@ class ExceptionHandler {
           final data = exception.response!.data;
           
           // Manejo específico para errores de autenticación
-          if (statusCode == 401) {
-            return AuthException.sessionExpired();
+          if (statusCode == 401 || (exception.message != null && exception.message!.contains('401'))) {
+            // Verificar si es un error de sesión expirada
+            if (data is Map) {
+              final message = data['message']?.toString().toLowerCase() ?? '';
+              final error = data['error']?.toString().toLowerCase() ?? '';
+              
+              if (message.contains('expirad') || message.contains('expir') || 
+                  error.contains('expirad') || error.contains('expir') ||
+                  message.contains('token') || error.contains('token') ||
+                  message.contains('sesión') || error.contains('sesión') ||
+                  message.contains('sesion') || error.contains('sesion')) {
+                return AuthException.sessionExpired();
+              }
+            }
+            return AuthException.invalidCredentials();
           } 
           
           // Errores 4xx - Errores del cliente

@@ -3,6 +3,7 @@ import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
 import 'package:littlecow/controller/events/auth_event.dart';
 import 'package:littlecow/controller/states/auth_state.dart';
+import 'package:littlecow/core/errors/app_exception.dart';
 import 'package:littlecow/data/auth_repository.dart';
 import 'package:watch_it/watch_it.dart';
 
@@ -67,6 +68,21 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
   }
 
+  AuthFailure _handleAuthException(dynamic e) {
+    if (e is AuthException) {
+      if (e.toString().toLowerCase().contains('credencial')) {
+        return AuthFailure(message: e.toString(), errorType: AuthErrorType.invalidCredentials);
+      } else if (e.toString().toLowerCase().contains('sesión') || 
+                e.toString().toLowerCase().contains('sesion') || 
+                e.toString().toLowerCase().contains('expir')) {
+        return AuthFailure(message: e.toString(), errorType: AuthErrorType.sessionExpired);
+      }
+    } else if (e is NetworkException) {
+      return AuthFailure(message: e.toString(), errorType: AuthErrorType.connectionError);
+    }    
+    return AuthFailure(message: e.toString(), errorType: AuthErrorType.unknown);
+  }
+
   /// Este método se encarga de verificar si el usuario ya está autenticado
   /// y emite el estado correspondiente.
   /// 
@@ -98,10 +114,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         emit(AuthUnauthenticated());
       }
     } catch (e) {
-      emit(AuthFailure(
-        message: e.toString(),
-        errorType: AuthErrorType.connectionError,
-      ));
+      emit(_handleAuthException(e));
     }
   }
 
@@ -117,6 +130,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   /// [event] : Evento de inicio de sesión
   /// [emit] : Función para emitir nuevos estados
   ///  
+  /// Método auxiliar para convertir excepciones en estados de fallo de autenticación
+  /// Este método centraliza el manejo de excepciones para evitar repetir código
+
   FutureOr<void> _onAuthLoggedIn(
       AuthLoggedIn event, Emitter<AuthState> emit) async {
     
@@ -131,23 +147,10 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         if (user != null) {
           emit(AuthAuthenticated(user));
           _startTokenVerification();
-        } else {
-          emit(const AuthFailure(
-            message: 'No se pudo obtener información del usuario',
-            errorType: AuthErrorType.unknown
-          ));
-        }
-      } else {
-        emit(AuthFailure(
-          message: loginResponse.message, 
-          errorType: AuthErrorType.invalidCredentials
-        ));
-      }
+        } 
+      } 
     } catch (e) {
-      emit(AuthFailure(
-        message: e.toString(),
-        errorType: AuthErrorType.connectionError
-      ));
+      emit(_handleAuthException(e));
     }
   }
 
@@ -170,10 +173,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       _stopTokenVerification();
       emit(AuthUnauthenticated());
     } catch (e) {
-      emit(AuthFailure(
-        message: e.toString(),
-        errorType: AuthErrorType.connectionError
-      ));
+      emit(_handleAuthException(e));
     }
   }
   
