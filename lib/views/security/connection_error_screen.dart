@@ -42,9 +42,7 @@ class ConnectionErrorScreen extends StatelessWidget {
               const SizedBox(height: 40),
               ElevatedButton.icon(
                 onPressed: () {
-                  // Reiniciar la app y verificar la autenticación
                   context.read<AuthBloc>().add(AuthCheckRequested());
-                  // Navegar a la pantalla de login
                   Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
                 },
                 icon: const Icon(Icons.refresh),

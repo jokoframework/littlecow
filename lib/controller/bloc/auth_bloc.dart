@@ -34,7 +34,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       return;
     }
     _stopTokenVerification();
-    _tokenVerificationTimer = Timer.periodic(const Duration(minutes: 1), (timer) async {
+    _tokenVerificationTimer = Timer.periodic(const Duration(minutes: 5), (timer) async {
       if (_tokenVerificationTimer != timer) {
         timer.cancel();
         return;

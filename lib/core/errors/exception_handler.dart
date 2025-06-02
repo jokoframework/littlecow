@@ -27,9 +27,7 @@ class ExceptionHandler {
           final statusCode = exception.response!.statusCode;
           final data = exception.response!.data;
           
-          // Manejo específico para errores de autenticación
           if (statusCode == 401 || (exception.message != null && exception.message!.contains('401'))) {
-            // Verificar si es un error de sesión expirada
             if (data is Map) {
               final message = data['message']?.toString().toLowerCase() ?? '';
               final error = data['error']?.toString().toLowerCase() ?? '';
@@ -45,12 +43,10 @@ class ExceptionHandler {
             return AuthException.invalidCredentials();
           } 
           
-          // Errores 4xx - Errores del cliente
           else if (statusCode! >= 400 && statusCode < 500) {
             String message = 'Error de cliente';
             String? errorMessage;
             
-            // Intentar extraer mensaje de error si existe
             if (data is Map && data.containsKey('message')) {
               errorMessage = data['message'];
               message = errorMessage ?? 'Error desconocido';
@@ -62,7 +58,6 @@ class ExceptionHandler {
             );
           } 
           
-          // Errores 5xx - Errores del servidor
           else if (statusCode >= 500) {
             return NetworkException.serverError(statusCode);
           }

@@ -13,7 +13,7 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     on<NotificationRefresh>(_onNotificationRefresh);
     on<MarkNotificationAsRead>(_onMarkNotificationAsRead);
   }
-  /// 
+   
   Future<void> _onFetchNotifications(
     FetchNotifications event,
     Emitter<NotificationState> emit,

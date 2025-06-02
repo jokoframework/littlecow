@@ -49,9 +49,9 @@ class NotificationModel {
     return NotificationModel(
       id: json['id'] ?? '',
       title: json['title'] ?? '',
-      message: json['message'] ?? '', // API uses 'body' for message content
-      type: mapCategory(json['category']), // API uses 'category' instead of 'type'
-      isRead: json['read'] ?? false, // API uses 'read' instead of 'isRead'
+      message: json['message'] ?? '', 
+      type: mapCategory(json['category']), 
+      isRead: json['read'] ?? false, 
       createdAt: json['timestamp'] != null 
         ? DateTime.parse(json['timestamp']) 
         : DateTime.now(),
@@ -63,15 +63,14 @@ class NotificationModel {
     return {
       'id': id,
       'title': title,
-      'body': message, // Map to API structure
-      'category': _categoryFromType(), // Convert type to category string
+      'body': message, 
+      'category': _categoryFromType(), 
       'read': isRead,
       'timestamp': createdAt.toIso8601String(),
       'channel': channel,
     };
   }
 
-  // Helper method to convert NotificationType to API category
   String _categoryFromType() {
     switch (type) {
       case NotificationType.warning:

@@ -6,16 +6,12 @@ class UserResponse extends JokoBaseResponse {
   final String userMessage;
 
   UserResponse({
-    required bool success,
-    String errorCode = '',
-    String message = '',
+    required super.success,
+    super.errorCode,
+    super.message,
     this.user,
     this.userMessage = '',
-  }) : super(
-          success: success,
-          errorCode: errorCode,
-          message: message,
-        );
+  });
 
   factory UserResponse.fromJson(Map<String, dynamic> json) {
     return UserResponse(

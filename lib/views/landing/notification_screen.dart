@@ -20,11 +20,11 @@ class NotificationsScreen extends StatelessWidget {
     return BlocConsumer<NotificationBloc, NotificationState>(
       listener: (context, state) {
         if (state is NotificationError) {
-          if (state.message == 'La sesión ha expirado' || state.message == 'Credenciales inválidas') {
+          if (state.message == 'La sesión ha expirado' ||
+              state.message == 'Credenciales inválidas') {
             debugPrint(state.message);
             context.read<AuthBloc>().add(AuthTokenInvalidated());
             Navigator.of(context).popUntil((route) => route.isFirst);
-
           } else if (state.operationType != 'mark_read') {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
@@ -59,7 +59,7 @@ class NotificationsScreen extends StatelessWidget {
                           );
                     },
                   );
-                }, 
+                },
               ),
             ],
           ),
@@ -95,7 +95,7 @@ class NotificationsScreen extends StatelessWidget {
                     },
                   ),
                 );
-              } 
+              }
               return const Center(
                 child: Text(
                   'Cargando notificaciones...',
@@ -122,13 +122,11 @@ class _NotificationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dateFormat = DateFormat('dd/MM/yyyy HH:mm');
-    
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color: notification.isRead 
-          ? Colors.white 
-          : Colors.blue.shade50, // Color diferente para no leídas
-      elevation: notification.isRead ? 1 : 3, // Elevación diferente para no leídas
+      color: notification.isRead ? Colors.white : Colors.blue.shade50,
+      elevation: notification.isRead ? 1 : 3,
       child: InkWell(
         onTap: () {
           if (!notification.isRead) {
@@ -150,7 +148,8 @@ class _NotificationCard extends StatelessWidget {
           title: Text(
             notification.title,
             style: TextStyle(
-              fontWeight: notification.isRead ? FontWeight.normal : FontWeight.bold,
+              fontWeight:
+                  notification.isRead ? FontWeight.normal : FontWeight.bold,
             ),
           ),
           subtitle: Column(
@@ -168,7 +167,7 @@ class _NotificationCard extends StatelessWidget {
               ),
             ],
           ),
-          trailing: !notification.isRead 
+          trailing: !notification.isRead
               ? Container(
                   width: 12,
                   height: 12,
@@ -176,7 +175,7 @@ class _NotificationCard extends StatelessWidget {
                     color: Colors.blue,
                     shape: BoxShape.circle,
                   ),
-                ) 
+                )
               : null,
           isThreeLine: true,
           contentPadding: const EdgeInsets.symmetric(
@@ -187,8 +186,9 @@ class _NotificationCard extends StatelessWidget {
       ),
     );
   }
-  
-  void _showNotificationDetails(BuildContext context, NotificationModel notification) {
+
+  void _showNotificationDetails(
+      BuildContext context, NotificationModel notification) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(

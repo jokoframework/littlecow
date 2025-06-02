@@ -60,7 +60,6 @@ class AuthRepository {
       if (cachedUser != null) {
         return cachedUser;
       }
-      
       final username = await _secureStorage.getUsername();
       
       if (username != null && username.isNotEmpty) {
@@ -74,9 +73,7 @@ class AuthRepository {
         } catch (e) {
           debugPrint ('Error obteniendo usuario por nombre: $e');
         }
-      }
-      
-      // Plan de respaldo: usar la información del token
+      }      
       final tokenInfo = await getTokenInfo();
       if (tokenInfo != null && tokenInfo.success) {
         final newUser = User(
@@ -133,7 +130,6 @@ class AuthRepository {
       
       final expirationDate = DateTime.fromMillisecondsSinceEpoch(expirationTimestamp);
       final now = DateTime.now();
-      // Añade un margen de seguridad para renovar el token antes de que expire
       return now.isAfter(expirationDate.subtract(const Duration(seconds: 30)));
     } catch (e) {
       throw ExceptionHandler.handle(e);
@@ -154,7 +150,6 @@ class AuthRepository {
           return accessToken;
         }
       } catch (_) {
-        // Si hay un error verificando la expiración, intentar refrescar de todos modos
       }      
       return await refreshAccessToken();
     } catch (e) {
@@ -172,7 +167,6 @@ class AuthRepository {
     if (_isRefreshing) {
       return null;
     }
-    
     _isRefreshing = true;
     
     try {
@@ -194,9 +188,7 @@ class AuthRepository {
       if (tokenResponse.expiration > 0) {
         final expirationDate = DateTime.now().add(Duration(seconds: tokenResponse.expiration));
         await _secureStorage.saveAccessTokenExpiration(expirationDate.millisecondsSinceEpoch);
-      }
-      
-      // Reiniciar el flag de notificación si obtuvimos un token válido
+      }      
       _hasNotifiedInvalid = false;
       return accessToken;
     } on DioException catch (e) {

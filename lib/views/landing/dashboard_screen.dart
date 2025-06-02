@@ -5,7 +5,7 @@ import '../../controller/bloc/dashboard_bloc.dart';
 import '../../controller/bloc/auth_bloc.dart';
 import '../../controller/bloc/notification_bloc.dart';
 import '../../controller/events/auth_event.dart';
-import '../../controller/events/notification_event.dart'; // Añadimos esta importación
+import '../../controller/events/notification_event.dart';
 import '../../controller/states/auth_state.dart';
 import '../../controller/states/notification_state.dart';
 import '../../presentation/widgets/badge_notification_icon.dart';
@@ -18,48 +18,52 @@ class DashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     developer.log('Building DashboardScreen', name: 'DashboardScreen');
     final authState = context.watch<AuthBloc>().state;
-    
+
     if (authState is AuthAuthenticated) {
-      developer.log('User authenticated: ${authState.user.name}', name: 'DashboardScreen');      
+      developer.log('User authenticated: ${authState.user.name}',
+          name: 'DashboardScreen');
     } else if (authState is AuthLoading) {
       developer.log('Auth state is loading', name: 'DashboardScreen');
     } else {
-      developer.log('User not authenticated or in unknown state: ${authState.runtimeType}', name: 'DashboardScreen');
+      developer.log(
+          'User not authenticated or in unknown state: ${authState.runtimeType}',
+          name: 'DashboardScreen');
     }
     return Scaffold(
       appBar: AppBar(
         title: const Text('Dashboard'),
         actions: [
-        if (authState is AuthAuthenticated)
-          Builder(
-            builder: (context) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                context.read<NotificationBloc>().add(
-                  FetchNotifications(userId: authState.user.id!),
-                );
-              });
-              return BlocBuilder<NotificationBloc, NotificationState>(
-                builder: (context, notificationState) {
-                  int unreadCount = 0;
-                  if (notificationState is NotificationLoaded) {
-                    unreadCount = notificationState.notifications
-                        .where((notification) => !notification.isRead)
-                        .length;
-                  }
-                  return BadgeNotificationIcon(
-                    hasNotification: unreadCount > 0,
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => NotificationsScreen(user: authState.user),
-                        ),
+          if (authState is AuthAuthenticated)
+            Builder(
+              builder: (context) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  context.read<NotificationBloc>().add(
+                        FetchNotifications(userId: authState.user.id!),
                       );
-                    },
-                  );
-                },
-              );
-            },
-          ),
+                });
+                return BlocBuilder<NotificationBloc, NotificationState>(
+                  builder: (context, notificationState) {
+                    int unreadCount = 0;
+                    if (notificationState is NotificationLoaded) {
+                      unreadCount = notificationState.notifications
+                          .where((notification) => !notification.isRead)
+                          .length;
+                    }
+                    return BadgeNotificationIcon(
+                      hasNotification: unreadCount > 0,
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                NotificationsScreen(user: authState.user),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                );
+              },
+            ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () {
@@ -75,7 +79,8 @@ class DashboardScreen extends StatelessWidget {
             developer.log('Dashboard is loading', name: 'DashboardScreen');
             return const Center(child: CircularProgressIndicator());
           } else if (state is DashboardLoaded) {
-            developer.log('Dashboard loaded with ${state.posts.length} posts', name: 'DashboardScreen');
+            developer.log('Dashboard loaded with ${state.posts.length} posts',
+                name: 'DashboardScreen');
             return ListView.builder(
               itemCount: state.posts.length,
               itemBuilder: (_, index) => ListTile(
@@ -84,7 +89,8 @@ class DashboardScreen extends StatelessWidget {
               ),
             );
           } else if (state is DashboardError) {
-            developer.log('Dashboard error: ${state.message}', name: 'DashboardScreen');
+            developer.log('Dashboard error: ${state.message}',
+                name: 'DashboardScreen');
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -103,14 +109,16 @@ class DashboardScreen extends StatelessWidget {
               ),
             );
           }
-          
-          // Si no hay datos, cargamos los datos
+
           if (context.read<DashboardBloc>().state is! DashboardLoaded) {
-            developer.log('Dashboard data not loaded, dispatching LoadDataEvent', name: 'DashboardScreen');
+            developer.log(
+                'Dashboard data not loaded, dispatching LoadDataEvent',
+                name: 'DashboardScreen');
             context.read<DashboardBloc>().add(LoadDataEvent());
           }
-          
-          developer.log('Dashboard data is loading...', name: 'DashboardScreen');
+
+          developer.log('Dashboard data is loading...',
+              name: 'DashboardScreen');
           return const Center(child: Text('Cargando datos...'));
         },
       ),
@@ -118,7 +126,8 @@ class DashboardScreen extends StatelessWidget {
   }
 
   void _showPostBodyModal(BuildContext context, int postId) {
-    developer.log('Showing post body modal for postId: $postId', name: 'DashboardScreen');
+    developer.log('Showing post body modal for postId: $postId',
+        name: 'DashboardScreen');
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -138,14 +147,16 @@ class _PostBodyDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    developer.log('Building PostBodyDialog for postId: $postId', name: 'DashboardScreen');
+    developer.log('Building PostBodyDialog for postId: $postId',
+        name: 'DashboardScreen');
     context.read<DashboardBloc>().add(LoadPostBodyEvent(postId: postId));
 
     return Dialog(
       child: BlocBuilder<DashboardBloc, DashboardState>(
         builder: (context, state) {
           if (state is PostBodyLoading) {
-            developer.log('Post body is loading for postId: $postId', name: 'DashboardScreen');
+            developer.log('Post body is loading for postId: $postId',
+                name: 'DashboardScreen');
             return const Padding(
               padding: EdgeInsets.all(20.0),
               child: Column(
@@ -158,14 +169,17 @@ class _PostBodyDialog extends StatelessWidget {
               ),
             );
           } else if (state is PostBodyLoaded && state.post.id == postId) {
-            developer.log('Post body loaded for postId: $postId', name: 'DashboardScreen');
+            developer.log('Post body loaded for postId: $postId',
+                name: 'DashboardScreen');
             return SingleChildScrollView(
               child: Padding(
                 padding: const EdgeInsets.all(20.0),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(state.post.title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    Text(state.post.title,
+                        style: const TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 10),
                     Text(state.post.body),
                     const SizedBox(height: 20),
@@ -180,7 +194,8 @@ class _PostBodyDialog extends StatelessWidget {
               ),
             );
           } else if (state is PostBodyError && state.postId == postId) {
-            developer.log('Error loading post body: ${state.message}', name: 'DashboardScreen');
+            developer.log('Error loading post body: ${state.message}',
+                name: 'DashboardScreen');
             return Padding(
               padding: const EdgeInsets.all(20.0),
               child: Column(
@@ -202,7 +217,9 @@ class _PostBodyDialog extends StatelessWidget {
                       const SizedBox(width: 16),
                       ElevatedButton(
                         onPressed: () {
-                          context.read<DashboardBloc>().add(LoadPostBodyEvent(postId: postId));
+                          context
+                              .read<DashboardBloc>()
+                              .add(LoadPostBodyEvent(postId: postId));
                         },
                         child: const Text('Reintentar'),
                       ),
@@ -212,15 +229,16 @@ class _PostBodyDialog extends StatelessWidget {
               ),
             );
           }
-          
-          // Estado por defecto o no reconocido
-          developer.log('Unknown post body state: ${state.runtimeType}', name: 'DashboardScreen');
+
+          developer.log('Unknown post body state: ${state.runtimeType}',
+              name: 'DashboardScreen');
           return Padding(
             padding: const EdgeInsets.all(20.0),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text("Error al cargar el post", style: TextStyle(fontSize: 16)),
+                const Text("Error al cargar el post",
+                    style: TextStyle(fontSize: 16)),
                 const SizedBox(height: 16),
                 TextButton(
                   onPressed: () {

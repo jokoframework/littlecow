@@ -35,12 +35,10 @@ class NotificationsResponse extends JokoBaseResponse {
   factory NotificationsResponse.fromJson(Map<String, dynamic> json) {
     final baseResponse = JokoBaseResponse.fromJson(json);
     
-    // Parse notifications from data field
     final notificationsList = (json['data'] as List?)
         ?.map((notificationJson) => NotificationModel.fromJson(notificationJson))
         .toList() ?? [];
 
-    // Parse metadata if available
     final metadataJson = json['metadata'] as Map<String, dynamic>?;
     final metadata = metadataJson != null 
         ? NotificationsMetadata.fromJson(metadataJson) 

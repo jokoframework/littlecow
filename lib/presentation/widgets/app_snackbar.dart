@@ -13,7 +13,6 @@ class AppSnackBar {
     final Color backgroundColor;
     final Duration snackBarDuration;
     
-    // Configurar según el tipo
     switch (type) {
       case SnackBarType.error:
         icon = Icons.error_outline;

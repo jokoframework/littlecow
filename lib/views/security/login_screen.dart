@@ -17,8 +17,7 @@ class LoginScreen extends StatefulWidget {
 class LoginScreenState extends State<LoginScreen> {
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  /// Método para manejar el inicio de sesión
-  /// 
+  /// Método para manejar el inicio de sesión 
   _handleLogin() {
     final username = _usernameController.text.trim();
     final password = _passwordController.text.trim();
@@ -31,9 +30,7 @@ class LoginScreenState extends State<LoginScreen> {
         duration: const Duration(seconds: 4),
       );
     }
-  }
-  /// Método para manejar el error de autenticación
-  ///   
+  }  
   _handleError(AuthState state) {
     if (state  is AuthFailure) {
       AppSnackBar.showError(
