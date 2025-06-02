@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 import 'dart:async';
-import 'package:littlecow/constants/api_routes.dart'; 
+import 'package:littlecow/core/api_routes.dart'; 
 import 'package:littlecow/core/errors/app_exception.dart';
 import 'package:littlecow/models/token_info_response.dart';
 import 'package:littlecow/models/token_response.dart';

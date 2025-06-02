@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:littlecow/constants/api_routes.dart';
+import 'package:littlecow/core/api_routes.dart';
 import 'package:littlecow/core/errors/app_exception.dart';
 import 'package:littlecow/core/errors/exception_handler.dart';
 import 'package:littlecow/models/notifications/notifications_response.dart';
