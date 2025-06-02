@@ -27,11 +27,7 @@ class MyApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider<AuthBloc>(
-          create: (context) {
-            final bloc = AuthBloc();
-            bloc.add(AuthCheckRequested());
-            return bloc;
-          },
+          create: (context) => AuthBloc()..add(AuthCheckRequested()),
         ),
         BlocProvider<DashboardBloc>(
           create: (context) => DashboardBloc(),
