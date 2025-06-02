@@ -131,7 +131,6 @@ class _NotificationCard extends StatelessWidget {
       elevation: notification.isRead ? 1 : 3, // Elevación diferente para no leídas
       child: InkWell(
         onTap: () {
-          // Si la notificación no está leída, marcamos como leída
           if (!notification.isRead) {
             context.read<NotificationBloc>().add(
                   MarkNotificationAsRead(

@@ -5,6 +5,7 @@ import '../../controller/bloc/dashboard_bloc.dart';
 import '../../controller/bloc/auth_bloc.dart';
 import '../../controller/bloc/notification_bloc.dart';
 import '../../controller/events/auth_event.dart';
+import '../../controller/events/notification_event.dart'; // Añadimos esta importación
 import '../../controller/states/auth_state.dart';
 import '../../controller/states/notification_state.dart';
 import '../../presentation/widgets/badge_notification_icon.dart';
@@ -19,7 +20,7 @@ class DashboardScreen extends StatelessWidget {
     final authState = context.watch<AuthBloc>().state;
     
     if (authState is AuthAuthenticated) {
-      developer.log('User authenticated: ${authState.user.name}', name: 'DashboardScreen');
+      developer.log('User authenticated: ${authState.user.name}', name: 'DashboardScreen');      
     } else if (authState is AuthLoading) {
       developer.log('Auth state is loading', name: 'DashboardScreen');
     } else {
@@ -29,28 +30,36 @@ class DashboardScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Dashboard'),
         actions: [
-          if (authState is AuthAuthenticated)
-            BlocBuilder<NotificationBloc, NotificationState>(
-              builder: (context, notificationState) {
-                int unreadCount = 0;
-                
-                if (notificationState is NotificationLoaded) {
-                  unreadCount = notificationState.notifications
-                      .where((notification) => !notification.isRead)
-                      .length;
-                }
-                return BadgeNotificationIcon(
-                  hasNotification: unreadCount > 0,
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => NotificationsScreen(user: authState.user),
-                      ),
-                    );
-                  },
+        if (authState is AuthAuthenticated)
+          Builder(
+            builder: (context) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                context.read<NotificationBloc>().add(
+                  FetchNotifications(userId: authState.user.id!),
                 );
-              },
-            ),
+              });
+              return BlocBuilder<NotificationBloc, NotificationState>(
+                builder: (context, notificationState) {
+                  int unreadCount = 0;
+                  if (notificationState is NotificationLoaded) {
+                    unreadCount = notificationState.notifications
+                        .where((notification) => !notification.isRead)
+                        .length;
+                  }
+                  return BadgeNotificationIcon(
+                    hasNotification: unreadCount > 0,
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => NotificationsScreen(user: authState.user),
+                        ),
+                      );
+                    },
+                  );
+                },
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () {
@@ -86,7 +95,6 @@ class DashboardScreen extends StatelessWidget {
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () {
-                      // Intentar cargar los datos nuevamente
                       context.read<DashboardBloc>().add(LoadDataEvent());
                     },
                     child: const Text('Reintentar'),
