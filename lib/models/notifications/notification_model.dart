@@ -72,7 +72,7 @@ class NotificationModel {
   String _categoryFromType() {
     switch (type) {
       case NotificationType.warning:
-        return 'alert';
+        return 'warning';
       case NotificationType.info:
         return 'info';
       case NotificationType.success:
