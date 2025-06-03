@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:littlecow/controller/bloc/auth_bloc.dart';
-import 'package:littlecow/controller/events/auth_event.dart';
+import 'package:littlecow/controller/bloc/auth/auth_bloc.dart';
+import 'package:littlecow/controller/bloc/auth/auth_event.dart';
 
 /// Pantalla que se muestra cuando hay un problema de conexión con el servidor.
 /// Permite al usuario reintentar la conexión con un botón.

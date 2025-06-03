@@ -1,69 +1,29 @@
 import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../controller/bloc/dashboard_bloc.dart';
-import '../../controller/bloc/auth_bloc.dart';
-import '../../controller/bloc/notification_bloc.dart';
-import '../../controller/events/auth_event.dart';
-import '../../controller/events/notification_event.dart';
-import '../../controller/states/auth_state.dart';
-import '../../controller/states/notification_state.dart';
+import '../../controller/bloc/dashboard/dashboard_bloc.dart';
+import '../../controller/bloc/auth/auth_bloc.dart';
+import '../../controller/bloc/notification/notification_bloc.dart';
+import '../../controller/bloc/auth/auth_event.dart';
+import '../../controller/bloc/notification/notification_event.dart';
+import '../../controller/bloc/auth/auth_state.dart';
+import '../../controller/bloc/notification/notification_state.dart';
 import '../../presentation/widgets/badge_notification_icon.dart';
 import 'notification_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
-
   @override
   Widget build(BuildContext context) {
     developer.log('Building DashboardScreen', name: 'DashboardScreen');
-    final authState = context.watch<AuthBloc>().state;
-
-    if (authState is AuthAuthenticated) {
-      developer.log('User authenticated: ${authState.user.name}',
-          name: 'DashboardScreen');
-    } else if (authState is AuthLoading) {
-      developer.log('Auth state is loading', name: 'DashboardScreen');
-    } else {
-      developer.log(
-          'User not authenticated or in unknown state: ${authState.runtimeType}',
-          name: 'DashboardScreen');
-    }
     return Scaffold(
       appBar: AppBar(
         title: const Text('Dashboard'),
         actions: [
-          if (authState is AuthAuthenticated)
-            Builder(
-              builder: (context) {
-                WidgetsBinding.instance.addPostFrameCallback((_) {
-                  context.read<NotificationBloc>().add(
-                        FetchNotifications(userId: authState.user.id!),
-                      );
-                });
-                return BlocBuilder<NotificationBloc, NotificationState>(
-                  builder: (context, notificationState) {
-                    int unreadCount = 0;
-                    if (notificationState is NotificationLoaded) {
-                      unreadCount = notificationState.notifications
-                          .where((notification) => !notification.isRead)
-                          .length;
-                    }
-                    return BadgeNotificationIcon(
-                      hasNotification: unreadCount > 0,
-                      onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                NotificationsScreen(user: authState.user),
-                          ),
-                        );
-                      },
-                    );
-                  },
-                );
-              },
-            ),
+          IconButton(icon: const Icon(Icons.notifications), 
+          onPressed: () {
+            developer.log('Notifications icon pressed', name: 'DashboardScreen');
+          }),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () {

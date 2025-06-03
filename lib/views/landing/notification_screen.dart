@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import 'package:littlecow/controller/bloc/notification_bloc.dart';
-import 'package:littlecow/controller/events/notification_event.dart';
-import 'package:littlecow/controller/states/notification_state.dart';
-import 'package:littlecow/controller/bloc/auth_bloc.dart';
-import 'package:littlecow/controller/events/auth_event.dart';
+import 'package:littlecow/controller/bloc/notification/notification_bloc.dart';
+import 'package:littlecow/controller/bloc/notification/notification_event.dart';
+import 'package:littlecow/controller/bloc/notification/notification_state.dart';
+import 'package:littlecow/controller/bloc/auth/auth_bloc.dart';
+import 'package:littlecow/controller/bloc/auth/auth_event.dart';
 import 'package:littlecow/models/notifications/notification_model.dart';
 import 'package:littlecow/models/user_model.dart';
 
@@ -23,7 +23,7 @@ class NotificationsScreen extends StatelessWidget {
           if (state.message == 'La sesión ha expirado' ||
               state.message == 'Credenciales inválidas') {
             debugPrint(state.message);
-            context.read<AuthBloc>().add(AuthTokenInvalidated());
+            //context.read<AuthBloc>().add(AuthTokenInvalidated());
             Navigator.of(context).popUntil((route) => route.isFirst);
           } else if (state.operationType != 'mark_read') {
             ScaffoldMessenger.of(context).showSnackBar(
