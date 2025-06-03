@@ -4,19 +4,35 @@ import 'package:littlecow/controller/bloc/auth/auth_event.dart';
 import 'package:littlecow/controller/bloc/auth/auth_state.dart';
 import 'package:littlecow/core/errors/app_exception.dart';
 import 'package:littlecow/data/auth_repository.dart';
+import 'package:littlecow/controller/bloc/user_activity/user_activity_bloc.dart';
+import 'package:littlecow/controller/bloc/user_activity/user_activity_state.dart';
 import 'package:watch_it/watch_it.dart';
-
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final  _authRepository = di<AuthRepository>();
-  StreamSubscription? _tokenInvalidSubscription;
+  StreamSubscription? _onUserActivitySubscription;
   
   AuthBloc() : super(AuthInitial()) {
     on<AuthCheckRequested>(_onAuthCheckRequested);
     on<AuthLoggedIn>(_onAuthLoggedIn);
     on<AuthLoggedOut>(_onAuthLoggedOut);
-    //on<AuthTokenRefresheRequested>(_onAuthTokenRefresheRequested);
-    //on<AuthTokenExpired>(_onAuthTokenExpired);
+    on<AuthTokenRefresheRequested>(_onAuthTokenRefresheRequested);
+    on<AuthTokenExpired>(_onAuthTokenExpired);
+    on<AuthUserInactivityDetected>(_onAuthUserInactivityDetected);
+  }
+
+  void listenToUserActivity(UserActivityBloc userActivityBloc) {
+    // Cancela cualquier suscripción existente
+    _onUserActivitySubscription?.cancel();
+    
+    // Configura una nueva suscripción para escuchar cambios futuros
+    _onUserActivitySubscription = userActivityBloc.stream.listen((userActivityState) {
+      // Solo nos interesa el estado UserActivityInactive cuando el usuario está autenticado
+      if (userActivityState is UserActivityInactive && state is AuthAuthenticated) {
+        print('🔑 AuthBloc: Detected inactivity while authenticated, adding AuthUserInactivityDetected');
+        add(AuthUserInactivityDetected());
+      }
+    });
   }
 
   /// Este método se encarga de verificar si el usuario ya está autenticado
@@ -104,23 +120,97 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(AuthUnauthenticated(message: error.toString(),error: error));
     }
   }
-  /*Future<void> _onAuthTokenRefresheRequested (AuthTokenRefresheRequested event,Emitter<AuthState> emit) async {
-    emit(AuthLoading());
-    async {
-      final user = await _authRepository.refreshToken();
-      if (user != null) {
-        emit(AuthAuthenticated(user));
-      } else {
-        emit(const AuthUnauthenticated(message: 'Token no pudo ser refrescado'));
+  
+
+  /// Este método se encarga de refrescar el token de autenticación cuando sea necesario.
+  /// 
+  /// 1. Intenta refrescar el token de acceso
+  /// 2. Si el refresco es exitoso, mantiene el estado de autenticación actual
+  /// 3. Si el refresco falla, emite un estado de no autenticado
+  /// 
+  /// Parámetros:
+  /// [event] : Evento de solicitud de refresco de token
+  /// [emit] : Función para emitir nuevos estados
+  /// 
+  FutureOr<void> _onAuthTokenRefresheRequested(
+      AuthTokenRefresheRequested event, Emitter<AuthState> emit) async {
+    try {
+      final currentState = state;
+      if (currentState is AuthAuthenticated) {
+        emit(AuthLoading());
+        final accessToken = await _authRepository.refreshAccessToken();
+        if (accessToken != null) {
+          final user = await _authRepository.getCurrentUser();
+          if (user != null) {
+            emit(AuthAuthenticated(user));
+          } else {
+            emit(const AuthUnauthenticated(message: 'No se pudo obtener la información del usuario'));
+          }
+        } else {
+          emit(const AuthUnauthenticated(message: 'No se pudo refrescar el token de autenticación'));
+        }
       }
     } on AppException catch (error) {
-      emit(AuthUnauthenticated(message: error.toString(),error: error));
+      emit(AuthUnauthenticated(message: error.toString(), error: error));
     }
-  }*/
+  }
 
+  /// Este método se encarga de manejar la expiración del token de autenticación.
+  /// 
+  /// 1. Notifica al usuario que la sesión ha expirado
+  /// 2. Emite un estado de no autenticado
+  /// 
+  /// Parámetros:
+  /// [event] : Evento de expiración de token
+  /// [emit] : Función para emitir nuevos estados
+  /// 
+  FutureOr<void> _onAuthTokenExpired(
+      AuthTokenExpired event, Emitter<AuthState> emit) async {
+    try {
+      await _authRepository.logout();
+      emit(const AuthUnauthenticated(message: 'Su sesión ha expirado, por favor inicie sesión nuevamente'));
+    } on AppException catch (error) {
+      emit(AuthUnauthenticated(message: error.toString(), error: error));
+    }
+  }
+
+  /// Este método se encarga de manejar la inactividad del usuario.
+  /// 
+  /// 1. Cierra la sesión del usuario si está inactivo
+  /// 2. Emite un estado de no autenticado
+  /// 
+  /// Parámetros:
+  /// [event] : Evento de detección de inactividad del usuario
+  /// [emit] : Función para emitir nuevos estados
+  /// 
+  FutureOr<void> _onAuthUserInactivityDetected(
+      AuthUserInactivityDetected event, Emitter<AuthState> emit) async {
+    // Verificamos primero que estemos en un estado autenticado
+    final currentState = state;
+    print('🔒 AuthBloc: Handling AuthUserInactivityDetected event - Current state: $currentState');
+    
+    if (currentState is! AuthAuthenticated) {
+      print('⚠️ AuthBloc: Cannot logout due to inactivity - User is not authenticated');
+      return;
+    }
+    
+    try {
+      print('🔒 AuthBloc: Attempting to logout user due to inactivity');
+      await _authRepository.logout();
+      print('👋 AuthBloc: User logged out due to inactivity');
+      emit(const AuthUnauthenticated(message: 'Has sido desconectado por inactividad'));
+    } on AppException catch (error) {
+      print('❌ AuthBloc: Error logging out user: ${error.toString()}');
+      emit(AuthUnauthenticated(message: error.toString(), error: error));
+    } catch (e) {
+      print('❌ AuthBloc: Unexpected error logging out user: $e');
+      emit(AuthUnauthenticated(message: 'Error inesperado al cerrar sesión: $e'));
+    }
+  }
+  
   @override
   Future<void> close() {
-    _tokenInvalidSubscription?.cancel();
+    _onUserActivitySubscription?.cancel();
     _authRepository.dispose();
     return super.close();
   }

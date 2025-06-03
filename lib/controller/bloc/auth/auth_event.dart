@@ -6,6 +6,7 @@ import 'package:equatable/equatable.dart';
 /// [AuthLoggedIn] - Cuando el usuario intenta iniciar sesion.
 /// [AuthLoggedOut] - Cuando el usuario solicita cerrar sesion.
 /// [AuthTokenInvalidated] - Para invalidar el token de autenticación.
+/// [AuthUserInactivityDetected] - Cuando se detecta inactividad del usuario.
 
 abstract class AuthEvent extends Equatable {
   const AuthEvent();
@@ -29,9 +30,10 @@ class AuthLoggedIn extends AuthEvent {
   @override
   List<Object> get props => [username, password];
 }
-/// Evento para solicitar el cierre de sesión
 class AuthLoggedOut extends AuthEvent {}
 
 class AuthTokenExpired extends AuthEvent {}
 
 class AuthTokenRefresheRequested extends AuthEvent {}
+
+class AuthUserInactivityDetected extends AuthEvent {}

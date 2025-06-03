@@ -1,6 +1,8 @@
 import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:littlecow/controller/bloc/user_activity/user_activity_bloc.dart';
+import 'package:littlecow/controller/bloc/user_activity/user_activity_event.dart';
 import '../../controller/bloc/dashboard/dashboard_bloc.dart';
 import '../../controller/bloc/auth/auth_bloc.dart';
 import '../../controller/bloc/notification/notification_bloc.dart';
@@ -17,72 +19,72 @@ class DashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     developer.log('Building DashboardScreen', name: 'DashboardScreen');
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Dashboard'),
-        actions: [
-          IconButton(icon: const Icon(Icons.notifications), 
-          onPressed: () {
-            developer.log('Notifications icon pressed', name: 'DashboardScreen');
-          }),
-          IconButton(
-            icon: const Icon(Icons.logout),
+        appBar: AppBar(
+          title: const Text('Dashboard'),
+          actions: [
+            IconButton(icon: const Icon(Icons.notifications), 
             onPressed: () {
-              context.read<AuthBloc>().add(AuthLoggedOut());
-            },
-            tooltip: 'Cerrar sesión',
-          ),
-        ],
-      ),
-      body: BlocBuilder<DashboardBloc, DashboardState>(
-        builder: (context, state) {
-          if (state is DashboardLoading) {
-            developer.log('Dashboard is loading', name: 'DashboardScreen');
-            return const Center(child: CircularProgressIndicator());
-          } else if (state is DashboardLoaded) {
-            developer.log('Dashboard loaded with ${state.posts.length} posts',
+              developer.log('Notifications icon pressed', name: 'DashboardScreen');
+            }),
+            IconButton(
+              icon: const Icon(Icons.logout),
+              onPressed: () {
+                context.read<AuthBloc>().add(AuthLoggedOut());
+              },
+              tooltip: 'Cerrar sesión',
+            ),
+          ],
+        ),
+        body: BlocBuilder<DashboardBloc, DashboardState>(
+          builder: (context, state) {
+            if (state is DashboardLoading) {
+              developer.log('Dashboard is loading', name: 'DashboardScreen');
+              return const Center(child: CircularProgressIndicator());
+            } else if (state is DashboardLoaded) {
+              developer.log('Dashboard loaded with ${state.posts.length} posts',
+                  name: 'DashboardScreen');
+              return ListView.builder(
+                itemCount: state.posts.length,
+                itemBuilder: (_, index) => ListTile(
+                  title: Text(state.posts[index].title),
+                  onTap: () => _showPostBodyModal(context, state.posts[index].id),
+                ),
+              );
+            } else if (state is DashboardError) {
+              developer.log('Dashboard error: ${state.message}',
+                  name: 'DashboardScreen');
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                    const SizedBox(height: 16),
+                    Text(state.message, textAlign: TextAlign.center),
+                    const SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () {
+                        context.read<DashboardBloc>().add(LoadDataEvent());
+                      },
+                      child: const Text('Reintentar'),
+                    ),
+                  ],
+                ),
+              );
+            }
+      
+            if (context.read<DashboardBloc>().state is! DashboardLoaded) {
+              developer.log(
+                  'Dashboard data not loaded, dispatching LoadDataEvent',
+                  name: 'DashboardScreen');
+              context.read<DashboardBloc>().add(LoadDataEvent());
+            }
+      
+            developer.log('Dashboard data is loading...',
                 name: 'DashboardScreen');
-            return ListView.builder(
-              itemCount: state.posts.length,
-              itemBuilder: (_, index) => ListTile(
-                title: Text(state.posts[index].title),
-                onTap: () => _showPostBodyModal(context, state.posts[index].id),
-              ),
-            );
-          } else if (state is DashboardError) {
-            developer.log('Dashboard error: ${state.message}',
-                name: 'DashboardScreen');
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                  const SizedBox(height: 16),
-                  Text(state.message, textAlign: TextAlign.center),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () {
-                      context.read<DashboardBloc>().add(LoadDataEvent());
-                    },
-                    child: const Text('Reintentar'),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          if (context.read<DashboardBloc>().state is! DashboardLoaded) {
-            developer.log(
-                'Dashboard data not loaded, dispatching LoadDataEvent',
-                name: 'DashboardScreen');
-            context.read<DashboardBloc>().add(LoadDataEvent());
-          }
-
-          developer.log('Dashboard data is loading...',
-              name: 'DashboardScreen');
-          return const Center(child: Text('Cargando datos...'));
-        },
-      ),
-    );
+            return const Center(child: Text('Cargando datos...'));
+          },
+        ),
+      );
   }
 
   void _showPostBodyModal(BuildContext context, int postId) {
