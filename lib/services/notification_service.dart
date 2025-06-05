@@ -12,6 +12,14 @@ class NotificationService {
     Dio? dio,
   }) : _dio = dio ?? Dio();
 
+  /// Metodo que obitiene las notificaciones de un usuario
+  /// Parametros:
+  /// - [userId]: ID del usuario
+  /// - [accessToken]: Token de acceso del usuario
+  /// 
+  /// Retorno:
+  /// - [NotificationsResponse] con las notificaciones del usuario
+  /// 
   Future<NotificationsResponse> getUserNotifications(
       String userId, String accessToken) async {
     try {
@@ -31,7 +39,15 @@ class NotificationService {
       throw ExceptionHandler.handle(e);
     }
   }
-
+  /// Metodo que marca una notificación como leída
+  /// Parámetros:
+  /// - [notificationId]: ID de la notificación a marcar como leída
+  /// - [accessToken]: Token de acceso del usuario
+  /// - [userId]: ID del usuario propietario de la notificación
+  /// 
+  /// Retorno:
+  /// - [bool] indicando si la operación fue exitosa
+  /// 
   Future<bool> markNotificationAsRead(
       String notificationId, String accessToken, String userId) async {
     try {

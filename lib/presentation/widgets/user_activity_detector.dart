@@ -6,6 +6,7 @@ import 'package:littlecow/controller/bloc/auth/auth_state.dart';
 import 'package:littlecow/controller/bloc/user_activity/user_activity_bloc.dart';
 import 'package:littlecow/controller/bloc/user_activity/user_activity_event.dart';
 
+/// Widget para detectar actividad del usuario y reiniciar un temporizador
 class UserActivityDetector extends StatefulWidget {
   final Widget child;
 

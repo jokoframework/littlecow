@@ -2,7 +2,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:littlecow/core/errors/app_exception.dart';
-
+/// Exception handler para manejar excepciones de Dio y otras excepciones comunes
 class ExceptionHandler {
   static AppException handleDioException(DioException exception) {
     switch (exception.type) {

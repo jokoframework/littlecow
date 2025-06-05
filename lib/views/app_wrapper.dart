@@ -18,7 +18,6 @@ class AppWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocConsumer<AuthBloc, AuthState>(
       listener: (context, state) {
-        debugPrint('AppWrapper: AuthBloc state changed: $state');
         if (state is AuthAuthenticated) {
           context.read<UserActivityBloc>().add(UserActivityStarted());
         }
