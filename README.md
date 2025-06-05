@@ -2,7 +2,7 @@
 ## Entorno de desarrollo
 | Componente| Version | 
 |----------|----------|
-| Flutter    |  3.29.2  | 
+| Flutter    |  3.29.3  | 
 | Dart    | 3.7.2   | 
 | Android Studio    | 2024.3 | 
 | Android SDK  | 35.0.1 | 
@@ -31,6 +31,19 @@ flutter pub get
 # 5. Ejecutar (usar tu dispositivo conectado o emulador)
 flutter run
 ```
+
+### Configuración para Dispositivos Móviles
+**IMPORTANTE:** Cuando pruebes la aplicación con un teléfono conectado o emulador, debes modificar el archivo `.env` para cambiar "localhost" por la IP del servidor en `BASE_URL`.
+
+Ejemplo:
+```bash
+# Original
+BASE_URL="http://localhost:8080/api"
+
+# Modificado para dispositivo móvil
+BASE_URL="http://192.168.X.X:8080/api"
+```
+
 
 ### Ejecutar en Linux Desktop
 Para ejecutar específicamente en tu escritorio Linux, sigue estos pasos:
