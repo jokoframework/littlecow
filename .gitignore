@@ -64,7 +64,7 @@ Gemfile.lock
 .pub/
 build/
 coverage/
-lib/generated_plugin_registrant.dart
+**/lib/generated_plugin_registrant.dart
 flutter_*.png
 linked_*.ds
 unlinked.ds
@@ -163,12 +163,15 @@ ios/Podfile.lock
 **/macos/**/.symlinks/
 **/macos/**/profile
 **/macos/**/xcuserdata
+**/macos/**/GeneratedPluginRegistrant.swift
 # No ignoramos toda la carpeta macos/ porque contiene archivos necesarios para el proyecto
 
 # Windows
 **/windows/flutter/generated_plugin_registrant.cc
 **/windows/flutter/generated_plugin_registrant.h
 **/windows/flutter/generated_plugins.cmake
+**/windows/.plugin_symlinks/
+**/windows/out/
 
 # Linux
 # linux/  # Comentado para incluir los archivos necesarios de Linux
@@ -176,6 +179,8 @@ ios/Podfile.lock
 **/linux/flutter/generated_plugin_registrant.h
 **/linux/flutter/generated_plugins.cmake
 **/linux/.generated_plugins
+**/linux/.plugin_symlinks/
+**/linux/out/
 
 # Android Studio
 /*/build/
@@ -256,6 +261,14 @@ firebase_options.dart
 
 # Flutter version manager
 .fvm/
+
+# Archivos generados por Flutter en todas las plataformas
+**/GeneratedPluginRegistrant.*
+**/generated_plugin_registrant.*
+**/generated_plugins.cmake
+**/.generated/
+**/.dart_tool/
+**/ephemeral/
 
 # Exceptions to above rules.
 !**/ios/**/default.mode1v3
