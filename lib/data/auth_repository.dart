@@ -9,19 +9,18 @@ import 'package:littlecow/services/auth_service.dart';
 import 'package:watch_it/watch_it.dart';
 
 class AuthRepository {
-  final  _authService = di<AuthService>();
-  final  _secureStorage = di<SecureStorageService>();
-  
+  final _authService = di<AuthService>();
+  final _secureStorage = di<SecureStorageService>();
+
   AuthRepository() {
     cleanInvalidCredentials();
   }
-  
-  /// Limpia las credenciales inválidas al iniciar la aplicación
+
   Future<void> cleanInvalidCredentials() async {
     try {
       final hasRefreshToken = await _secureStorage.hasRefreshToken();
       if (!hasRefreshToken) {
-        return; 
+        return;
       }
 
       final accessToken = await _secureStorage.getAccessToken();
@@ -31,14 +30,11 @@ class AuthRepository {
           if (!tokenInfo.success || tokenInfo.expiresIn <= 0) {
             debugPrint('Token inválido detectado. Limpiando almacenamiento...');
             await _secureStorage.deleteAllTokens();
-            await _secureStorage.deleteUserData();
-            await _secureStorage.deleteUsername();
           }
         } catch (e) {
-          debugPrint('Error verificando token al iniciar: $e. Limpiando almacenamiento...');
+          debugPrint(
+              'Error verificando token al iniciar: $e. Limpiando almacenamiento...');
           await _secureStorage.deleteAllTokens();
-          await _secureStorage.deleteUserData();
-          await _secureStorage.deleteUsername();
         }
       }
     } catch (e) {
@@ -46,16 +42,12 @@ class AuthRepository {
     }
   }
 
-  /// Realiza el inicio de sesión
-  /// 
-  /// [username] - nombre de usuario.
-  /// [password] - contraseña.
-  /// Lanza AppException en caso de error.
   Future<JokoTokenResponse> login(String username, String password) async {
     try {
       final loginResponse = await _authService.login(username, password);
       if (loginResponse.success) {
-        debugPrint('creacion del refreshToken: ${DateTime.now() }, ${loginResponse.secret}');
+        debugPrint(
+            'creacion del refreshToken: ${DateTime.now()}, ${loginResponse.secret}');
         await _secureStorage.saveRefreshToken(loginResponse.secret);
         await _secureStorage.saveUsername(username);
       }
@@ -64,8 +56,7 @@ class AuthRepository {
       throw ExceptionHandler.handle(e);
     }
   }
-  
-  
+
   Future<User?> getCurrentUser() async {
     try {
       final username = await _secureStorage.getUsername();
@@ -73,11 +64,13 @@ class AuthRepository {
         return null;
       }
       final accessToken = await getValidAccessToken();
-      debugPrint('getCurrentUser: accessToken: ${DateTime.now()}, $accessToken');
+      debugPrint(
+          'getCurrentUser: accessToken: ${DateTime.now()}, $accessToken');
       if (accessToken == null || accessToken.isEmpty) {
         return null;
       }
-      final userResponse = await _authService.getUserInfo(accessToken, username);
+      final userResponse =
+          await _authService.getUserInfo(accessToken, username);
       if (userResponse.user != null) {
         await _secureStorage.saveUserData(userResponse.user!);
         return userResponse.user;
@@ -87,9 +80,7 @@ class AuthRepository {
       throw ExceptionHandler.handle(e);
     }
   }
-  
-  /// Cierra la sesión del usuario actual
-  /// Lanza AppException en caso de error grave que impida el logout.
+
   Future<void> logout() async {
     try {
       final refreshToken = await _secureStorage.getRefreshToken();
@@ -98,12 +89,9 @@ class AuthRepository {
       throw ExceptionHandler.handle(e);
     } finally {
       await _secureStorage.deleteAllTokens();
-      await _secureStorage.deleteUserData();
-      await _secureStorage.deleteUsername();
     }
   }
-  
-  /// Verifica si hay una sesión activa y válida
+
   Future<bool> hasActiveSession() async {
     try {
       bool refreshTokenExists = await _secureStorage.hasRefreshToken();
@@ -113,19 +101,20 @@ class AuthRepository {
       final userExists = await _secureStorage.hasUserData();
       return userExists;
     } catch (e) {
-      return false; 
+      return false;
     }
   }
 
-  /// Verifica si el token de acceso ha expirado
   Future<bool> isAccessTokenExpired() async {
     try {
-      final expirationTimestamp = await _secureStorage.getAccessTokenExpiration();
+      final expirationTimestamp =
+          await _secureStorage.getAccessTokenExpiration();
       if (expirationTimestamp == null) {
         return true;
       }
-      
-      final expirationDate = DateTime.fromMillisecondsSinceEpoch(expirationTimestamp);
+
+      final expirationDate =
+          DateTime.fromMillisecondsSinceEpoch(expirationTimestamp);
       final now = DateTime.now();
       return now.isAfter(expirationDate.subtract(const Duration(seconds: 30)));
     } catch (e) {
@@ -133,29 +122,30 @@ class AuthRepository {
     }
   }
 
-  /// Obtiene un token de acceso válido
-  /// Si el token está expirado, intenta refrescarlo automáticamente
-  /// Ahora verifica la validez del token directamente con token/info
   Future<String?> getValidAccessToken() async {
     try {
-      final accessToken = await _secureStorage.getAccessToken();      
+      final accessToken = await _secureStorage.getAccessToken();
       if (accessToken == null || accessToken.isEmpty) {
         return await refreshAccessToken();
       }
-      
+
       try {
         final tokenInfo = await _authService.getTokenInfo(accessToken);
-        
+
         if (tokenInfo.success && tokenInfo.expiresIn > 30) {
-          final expirationDate = DateTime.now().add(Duration(seconds: tokenInfo.expiresIn));
-          await _secureStorage.saveAccessTokenExpiration(expirationDate.millisecondsSinceEpoch);
+          final expirationDate =
+              DateTime.now().add(Duration(seconds: tokenInfo.expiresIn));
+          await _secureStorage
+              .saveAccessTokenExpiration(expirationDate.millisecondsSinceEpoch);
           return accessToken;
         } else {
-          debugPrint('Token inválido o expirado según token/info. Refrescando...');
+          debugPrint(
+              'Token inválido o expirado según token/info. Refrescando...');
           return await refreshAccessToken();
         }
       } catch (e) {
-        debugPrint('Error al verificar token con token/info: $e. Refrescando...');
+        debugPrint(
+            'Error al verificar token con token/info: $e. Refrescando...');
         return await refreshAccessToken();
       }
     } catch (e) {
@@ -163,15 +153,14 @@ class AuthRepository {
     }
   }
 
-  /// Refresca el token de acceso usando el refresh token
   static bool _isRefreshing = false;
-  
+
   Future<String?> refreshAccessToken() async {
     if (_isRefreshing) {
       return null;
     }
     _isRefreshing = true;
-    
+
     try {
       final refreshToken = await _secureStorage.getRefreshToken();
       if (refreshToken == null || refreshToken.isEmpty) {
@@ -181,8 +170,10 @@ class AuthRepository {
       final accessToken = tokenResponse.secret;
       await _secureStorage.saveAccessToken(accessToken);
       if (tokenResponse.expiration > 0) {
-        final expirationDate = DateTime.now().add(Duration(seconds: tokenResponse.expiration));
-        await _secureStorage.saveAccessTokenExpiration(expirationDate.millisecondsSinceEpoch);
+        final expirationDate =
+            DateTime.now().add(Duration(seconds: tokenResponse.expiration));
+        await _secureStorage
+            .saveAccessTokenExpiration(expirationDate.millisecondsSinceEpoch);
       }
       return accessToken;
     } on AppException catch (ex) {
@@ -197,14 +188,12 @@ class AuthRepository {
     }
   }
 
-  /// Obtiene información del token de acceso actual
-  /// Lanza AppException en caso de error.
   Future<JokoTokenInfoResponse?> getTokenInfo() async {
     try {
       final accessToken = await _secureStorage.getAccessToken();
       if (accessToken == null || accessToken.isEmpty) {
         throw AuthException.sessionExpired();
-      }      
+      }
       try {
         final tokenInfo = await _authService.getTokenInfo(accessToken);
         return tokenInfo;
@@ -214,14 +203,14 @@ class AuthRepository {
         final newAccessToken = await refreshAccessToken();
         if (newAccessToken == null || newAccessToken.isEmpty) {
           throw AuthException.sessionExpired();
-        }        
+        }
         return await _authService.getTokenInfo(newAccessToken);
       }
     } catch (e) {
       throw ExceptionHandler.handle(e);
     }
   }
-  
+
   void dispose() {
     _authService.dispose();
   }

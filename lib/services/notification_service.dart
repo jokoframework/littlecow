@@ -12,13 +12,8 @@ class NotificationService {
     Dio? dio,
   }) : _dio = dio ?? Dio();
 
-  /// Obtiene las notificaciones de un usuario específico
-  /// 
-  /// [userId] es el identificador único del usuario (UUID)
-  /// [accessToken] es el token de acceso para autenticación
-  /// 
-  /// Retorna un [NotificationsResponse] con la lista de notificaciones
-  Future<NotificationsResponse> getUserNotifications(String userId, String accessToken) async {
+  Future<NotificationsResponse> getUserNotifications(
+      String userId, String accessToken) async {
     try {
       if (accessToken.isEmpty) {
         throw AuthException.sessionExpired();
@@ -36,20 +31,15 @@ class NotificationService {
       throw ExceptionHandler.handle(e);
     }
   }
-  
-  /// Marca una notificación como leída
-  /// 
-  /// [notificationId] es el identificador único de la notificación
-  /// [accessToken] es el token de acceso para autenticación
-  /// 
-  /// Retorna true si se marcó correctamente, false en caso contrario
-  Future<bool> markNotificationAsRead(String notificationId, String accessToken, String userId) async {
+
+  Future<bool> markNotificationAsRead(
+      String notificationId, String accessToken, String userId) async {
     try {
       if (accessToken.isEmpty) {
         throw AuthException.sessionExpired();
       }
       final response = await _dio.put(
-        ApiRoutes.markNotificationAsRead(notificationId,userId),
+        ApiRoutes.markNotificationAsRead(notificationId, userId),
         options: Options(
           headers: ApiRoutes.getCommonHeaders(token: accessToken),
         ),

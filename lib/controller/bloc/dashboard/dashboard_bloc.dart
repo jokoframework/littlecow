@@ -19,18 +19,16 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
   void _onLoadDataEvent(LoadDataEvent event, Emitter<DashboardState> emit) {
     developer.log('LoadDataEvent triggered', name: 'DashboardBloc');
     emit(DashboardLoading());
-    
+
     try {
-      // Aquí usarías datos mock
       final posts = List.generate(
           5,
-          (index) =>
-              Post(
-                id: index,
-                title: 'Post $index',
-                body:
-                    'Lorem ipsum $index dolor sit amet, consectetur adipiscing elit. Nullam nec nunc nec nunc. Donec nec nunc nec nunc. Donec nec nunc nec nunc.'));
-      
+          (index) => Post(
+              id: index,
+              title: 'Post $index',
+              body:
+                  'Lorem ipsum $index dolor sit amet, consectetur adipiscing elit. Nullam nec nunc nec nunc. Donec nec nunc nec nunc. Donec nec nunc nec nunc.'));
+
       if (posts.isEmpty) {
         emit(const DashboardError(message: 'No se encontraron posts'));
       } else {
@@ -38,26 +36,30 @@ class DashboardBloc extends Bloc<DashboardEvent, DashboardState> {
         developer.log('DashboardLoaded state emitted', name: 'DashboardBloc');
       }
     } catch (e) {
-      developer.log('Error loading posts: ${e.toString()}', name: 'DashboardBloc');
-      emit(DashboardError(message: 'Error al cargar los posts: ${e.toString()}'));
+      developer.log('Error loading posts: ${e.toString()}',
+          name: 'DashboardBloc');
+      emit(DashboardError(
+          message: 'Error al cargar los posts: ${e.toString()}'));
     }
   }
 
-  void _onLoadPostBodyEvent(LoadPostBodyEvent event, Emitter<DashboardState> emit) async {
+  void _onLoadPostBodyEvent(
+      LoadPostBodyEvent event, Emitter<DashboardState> emit) async {
     emit(PostBodyLoading());
     try {
-      // Simulación de un retardo
       await Future.delayed(const Duration(seconds: 2));
       final updatedPost = Post(
         id: event.postId,
         title: 'Post ${event.postId}',
-        body: 'Este es un contenido muy largo del post ${event.postId}. Aquí puedes poner mucho texto para simular una carga larga. Lorem ipsum dolor sit amet, consectetur adipiscing elit...',
+        body:
+            'Este es un contenido muy largo del post ${event.postId}. Aquí puedes poner mucho texto para simular una carga larga. Lorem ipsum dolor sit amet, consectetur adipiscing elit...',
       );
       emit(PostBodyLoaded(post: updatedPost));
     } catch (e) {
-      developer.log('Error loading post body: ${e.toString()}', name: 'DashboardBloc');
-      emit(PostBodyError(message: 'Error al cargar el post', postId: event.postId));
+      developer.log('Error loading post body: ${e.toString()}',
+          name: 'DashboardBloc');
+      emit(PostBodyError(
+          message: 'Error al cargar el post', postId: event.postId));
     }
   }
 }
-

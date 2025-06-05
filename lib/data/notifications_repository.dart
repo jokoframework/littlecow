@@ -6,40 +6,33 @@ import 'package:littlecow/services/notification_service.dart';
 import 'package:watch_it/watch_it.dart';
 
 class NotificationsRepository {
-  final  _notificationService = di<NotificationService>();
-  final  _authRepository = di<AuthRepository>();
-  
+  final _notificationService = di<NotificationService>();
+  final _authRepository = di<AuthRepository>();
+
   NotificationsRepository();
-  
-  /// Obtiene las notificaciones de un usuario específico
-  /// 
-  /// [userId] es el identificador único del usuario (UUID)
-  /// 
-  /// Retorna un [NotificationsResponse] con la lista de notificaciones
+
   Future<NotificationsResponse> getUserNotifications(String userId) async {
     try {
       final accessToken = await _authRepository.getValidAccessToken();
       if (accessToken == null || accessToken.isEmpty) {
         throw AuthException.sessionExpired();
-      }      
-      return await _notificationService.getUserNotifications(userId, accessToken);
+      }
+      return await _notificationService.getUserNotifications(
+          userId, accessToken);
     } catch (e) {
       throw ExceptionHandler.handle(e);
     }
   }
-  
-  /// Marca una notificación como leída
-  /// 
-  /// [notificationId] es el identificador único de la notificación
-  /// 
-  /// Retorna true si se marcó correctamente, false en caso contrario
-  Future<bool> markNotificationAsRead(String notificationId,String userId) async {
+
+  Future<bool> markNotificationAsRead(
+      String notificationId, String userId) async {
     try {
       final accessToken = await _authRepository.getValidAccessToken();
       if (accessToken == null || accessToken.isEmpty) {
         throw AuthException.sessionExpired();
       }
-      return await _notificationService.markNotificationAsRead(notificationId, accessToken, userId);
+      return await _notificationService.markNotificationAsRead(
+          notificationId, accessToken, userId);
     } catch (e) {
       throw ExceptionHandler.handle(e);
     }

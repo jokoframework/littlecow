@@ -16,7 +16,6 @@ import 'package:littlecow/presentation/widgets/user_activity_detector.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
-
   initLocator();
   runApp(const MyApp());
 }
@@ -30,15 +29,18 @@ class MyApp extends StatelessWidget {
       providers: [
         BlocProvider<UserActivityBloc>(
           create: (context) {
-            return UserActivityBloc(inactivityDuration: const Duration(minutes: 15))..add(UserActivityStarted());
+            return UserActivityBloc(
+                inactivityDuration: const Duration(minutes: 15))
+              ..add(UserActivityStarted());
           },
         ),
         BlocProvider<AuthBloc>(
           create: (context) {
             final authBloc = di<AuthBloc>()..add(AuthCheckRequested());
             WidgetsBinding.instance.addPostFrameCallback((_) {
-                final userActivityBloc = BlocProvider.of<UserActivityBloc>(context, listen: false);
-                authBloc.listenToUserActivity(userActivityBloc);
+              final userActivityBloc =
+                  BlocProvider.of<UserActivityBloc>(context, listen: false);
+              authBloc.listenToUserActivity(userActivityBloc);
             });
             return authBloc;
           },
@@ -57,9 +59,9 @@ class MyApp extends StatelessWidget {
             primarySwatch: Colors.blue,
             visualDensity: VisualDensity.adaptivePlatformDensity,
           ),
-          home: const AppWrapper(), // Usamos AppWrapper como única pantalla principal
+          home: const AppWrapper(),
         ),
-        ),
-      );
+      ),
+    );
   }
 }

@@ -3,20 +3,14 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:littlecow/core/errors/app_exception.dart';
 
-/// Clase utilitaria para el manejo centralizado de excepciones
-/// 
-/// Esta clase proporciona métodos para convertir diferentes tipos de errores
-/// en instancias de AppException, lo que permite un manejo consistente
-/// de errores en toda la aplicación.
 class ExceptionHandler {
-  /// Convierte una excepción de Dio en una AppException apropiada
   static AppException handleDioException(DioException exception) {
     switch (exception.type) {
       case DioExceptionType.connectionTimeout:
       case DioExceptionType.sendTimeout:
       case DioExceptionType.receiveTimeout:
         return NetworkException.connectionTimeout();
-        
+
       case DioExceptionType.badCertificate:
         return NetworkException(
           message: 'Error de certificado SSL',
@@ -26,39 +20,42 @@ class ExceptionHandler {
         if (exception.response != null) {
           final statusCode = exception.response!.statusCode;
           final data = exception.response!.data;
-          
-          if (statusCode == 401 || (exception.message != null && exception.message!.contains('401'))) {
+
+          if (statusCode == 401 ||
+              (exception.message != null &&
+                  exception.message!.contains('401'))) {
             if (data is Map) {
               final message = data['message']?.toString().toLowerCase() ?? '';
               final error = data['error']?.toString().toLowerCase() ?? '';
-              
-              if (message.contains('expirad') || message.contains('expir') || 
-                  error.contains('expirad') || error.contains('expir') ||
-                  message.contains('token') || error.contains('token') ||
-                  message.contains('sesión') || error.contains('sesión') ||
-                  message.contains('sesion') || error.contains('sesion')) {
+
+              if (message.contains('expirad') ||
+                  message.contains('expir') ||
+                  error.contains('expirad') ||
+                  error.contains('expir') ||
+                  message.contains('token') ||
+                  error.contains('token') ||
+                  message.contains('sesión') ||
+                  error.contains('sesión') ||
+                  message.contains('sesion') ||
+                  error.contains('sesion')) {
                 return AuthException.sessionExpired();
               }
             }
             return AuthException.invalidCredentials();
-          } 
-          
-          else if (statusCode! >= 400 && statusCode < 500) {
+          } else if (statusCode! >= 400 && statusCode < 500) {
             String message = 'Error de cliente';
             String? errorMessage;
-            
+
             if (data is Map && data.containsKey('message')) {
               errorMessage = data['message'];
               message = errorMessage ?? 'Error desconocido';
             }
-            
+
             return NetworkException(
               message: message,
               details: errorMessage ?? exception.message,
             );
-          } 
-          
-          else if (statusCode >= 500) {
+          } else if (statusCode >= 500) {
             return NetworkException.serverError(statusCode);
           }
         }
@@ -66,15 +63,15 @@ class ExceptionHandler {
           message: 'Error en la respuesta del servidor',
           details: exception.message,
         );
-        
+
       case DioExceptionType.cancel:
         return const NetworkException(
           message: 'Petición cancelada',
         );
-        
+
       case DioExceptionType.connectionError:
         return NetworkException.noInternet();
-        
+
       case DioExceptionType.unknown:
         if (exception.error is SocketException) {
           return NetworkException.noInternet();
@@ -82,8 +79,7 @@ class ExceptionHandler {
         return NetworkException.unknown(exception);
     }
   }
-  
-  /// Convierte cualquier excepción en una AppException apropiada
+
   static AppException handle(dynamic exception) {
     if (exception is AppException) {
       return exception;

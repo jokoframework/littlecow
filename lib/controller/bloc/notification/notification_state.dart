@@ -23,8 +23,8 @@ class NotificationLoaded extends NotificationState {
 
 class NotificationError extends NotificationState {
   final String message;
-  final String? operationType; // Tipo de operación: 'fetch', 'mark_read', etc.
-  final String? notificationId; // ID de la notificación afectada
+  final String? operationType;
+  final String? notificationId;
 
   const NotificationError({
     required this.message,

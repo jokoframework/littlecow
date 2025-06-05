@@ -11,31 +11,30 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
   final _notificationsRepository = di<NotificationsRepository>();
   final _authBloc = di<AuthBloc>();
 
-  NotificationBloc() :  super(NotificationInitial()) {
+  NotificationBloc() : super(NotificationInitial()) {
     on<FetchNotifications>(_onFetchNotifications);
     on<NotificationRefresh>(_onNotificationRefresh);
     on<MarkNotificationAsRead>(_onMarkNotificationAsRead);
   }
-  
-  /// Método auxiliar para manejar errores comunes y notificar al AuthBloc
-  /// cuando sea necesario
+
   void _handleErrorAndNotifyAuthBloc(String errorMessage) {
     _authBloc.add(AuthErrorFromBloc(error: errorMessage));
   }
-   
+
   Future<void> _onFetchNotifications(
     FetchNotifications event,
     Emitter<NotificationState> emit,
   ) async {
     emit(NotificationLoading());
     try {
-      final response = await _notificationsRepository.getUserNotifications(event.userId);
+      final response =
+          await _notificationsRepository.getUserNotifications(event.userId);
       if (response.success) {
         emit(NotificationLoaded(notifications: response.notifications));
       }
     } catch (e) {
       final errorMessage = e.toString();
-      emit(NotificationError(message: errorMessage));      
+      emit(NotificationError(message: errorMessage));
       _handleErrorAndNotifyAuthBloc(errorMessage);
     }
   }
@@ -45,7 +44,8 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     Emitter<NotificationState> emit,
   ) async {
     try {
-      final response = await _notificationsRepository.getUserNotifications(event.userId);
+      final response =
+          await _notificationsRepository.getUserNotifications(event.userId);
       if (response.success) {
         emit(NotificationLoaded(notifications: response.notifications));
       } else {
@@ -58,7 +58,6 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
       _handleErrorAndNotifyAuthBloc(e.toString());
     }
   }
-  
 
   Future<void> _onMarkNotificationAsRead(
     MarkNotificationAsRead event,
@@ -67,7 +66,8 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     try {
       final currentState = state;
       if (currentState is NotificationLoaded) {
-        final updatedNotifications = currentState.notifications.map((notification) {
+        final updatedNotifications =
+            currentState.notifications.map((notification) {
           if (notification.id == event.notificationId) {
             return NotificationModel(
               id: notification.id,
@@ -82,20 +82,22 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
           return notification;
         }).toList();
         emit(NotificationLoaded(notifications: updatedNotifications));
-        await _notificationsRepository.markNotificationAsRead(event.notificationId, event.userId);        
+        await _notificationsRepository.markNotificationAsRead(
+            event.notificationId, event.userId);
       }
     } catch (e) {
       final errorMessage = e.toString();
       final currentState = state;
       if (currentState is NotificationLoaded) {
-        final revertedNotifications = currentState.notifications.map((notification) {
+        final revertedNotifications =
+            currentState.notifications.map((notification) {
           if (notification.id == event.notificationId) {
             return NotificationModel(
               id: notification.id,
               title: notification.title,
               message: notification.message,
               type: notification.type,
-              isRead: false, 
+              isRead: false,
               createdAt: notification.createdAt,
               channel: notification.channel,
             );

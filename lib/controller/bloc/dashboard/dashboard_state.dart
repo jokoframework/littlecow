@@ -20,12 +20,11 @@ class DashboardLoaded extends DashboardState {
   List<Object> get props => [posts];
 }
 
-// Nuevo estado para manejar errores
 class DashboardError extends DashboardState {
   final String message;
 
   const DashboardError({required this.message});
-  
+
   @override
   List<Object> get props => [message];
 }
@@ -41,13 +40,12 @@ class PostBodyLoaded extends DashboardState {
   List<Object> get props => [post];
 }
 
-// Estado para errores en la carga de detalles del post
 class PostBodyError extends DashboardState {
   final String message;
   final int postId;
-  
+
   const PostBodyError({required this.message, required this.postId});
-  
+
   @override
   List<Object> get props => [message, postId];
 }

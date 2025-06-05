@@ -14,8 +14,8 @@ class DashboardScreen extends StatelessWidget {
       create: (context) => DashboardBloc()..add(LoadDataEvent()),
       child: Scaffold(
         appBar: AppBar(
-        title: const Text('Dashboard'),
-        actions: [
+          title: const Text('Dashboard'),
+          actions: [
             BlocBuilder<AuthBloc, AuthState>(
               builder: (context, authState) {
                 if (authState is AuthAuthenticated) {
@@ -23,7 +23,8 @@ class DashboardScreen extends StatelessWidget {
                   return IconButton(
                     icon: const Icon(Icons.notifications),
                     onPressed: () {
-                      developer.log('Notifications icon pressed for user: ${user.name} (ID: ${user.id})', 
+                      developer.log(
+                          'Notifications icon pressed for user: ${user.name} (ID: ${user.id})',
                           name: 'DashboardScreen');
                       Navigator.of(context).push(
                         MaterialPageRoute(
@@ -62,7 +63,8 @@ class DashboardScreen extends StatelessWidget {
                 itemCount: state.posts.length,
                 itemBuilder: (_, index) => ListTile(
                   title: Text(state.posts[index].title),
-                  onTap: () => _showPostBodyModal(context, state.posts[index].id),
+                  onTap: () =>
+                      _showPostBodyModal(context, state.posts[index].id),
                 ),
               );
             }
@@ -95,39 +97,41 @@ class _PostBodyDialog extends StatelessWidget {
   Widget build(BuildContext context) {
     context.read<DashboardBloc>().add(LoadPostBodyEvent(postId: postId));
 
-        return Dialog(
-            child: BlocBuilder<DashboardBloc, DashboardState>(
-          builder: (context, state) {
-            if (state is PostBodyLoading) {
-                  return Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      CircularProgressIndicator(),
-                      SizedBox(height: 20),
-                      Text("Cargando contenido..."),
-                    ],
-                  ),
-              );
+    return Dialog(
+      child: BlocBuilder<DashboardBloc, DashboardState>(
+        builder: (context, state) {
+          if (state is PostBodyLoading) {
+            return Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 20),
+                  Text("Cargando contenido..."),
+                ],
+              ),
+            );
           } else if (state is PostBodyLoaded && state.post.id == postId) {
-                  return SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.all(20.0),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(state.post.title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                        SizedBox(height: 10),
-                          Text(state.post.body),
-                      ],
-                    ),
-                    ),
-                  );
-            }
+            return SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(state.post.title,
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
+                    SizedBox(height: 10),
+                    Text(state.post.body),
+                  ],
+                ),
+              ),
+            );
+          }
           return Text("Error al cargar el post");
-          },
-            ),
+        },
+      ),
     );
   }
 }
