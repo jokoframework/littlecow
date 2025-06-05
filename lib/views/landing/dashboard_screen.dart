@@ -8,6 +8,8 @@ import '../../controller/bloc/auth/auth_state.dart';
 import 'notification_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
+  const DashboardScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
@@ -57,7 +59,7 @@ class DashboardScreen extends StatelessWidget {
         body: BlocBuilder<DashboardBloc, DashboardState>(
           builder: (context, state) {
             if (state is DashboardLoading) {
-              return Center(child: CircularProgressIndicator());
+              return const Center(child: CircularProgressIndicator());
             } else if (state is DashboardLoaded) {
               return ListView.builder(
                 itemCount: state.posts.length,
@@ -68,7 +70,7 @@ class DashboardScreen extends StatelessWidget {
                 ),
               );
             }
-            return Center(child: Text('Something went wrong!'));
+            return const Center(child: Text('Something went wrong!'));
           },
         ),
       ),
@@ -91,7 +93,7 @@ class DashboardScreen extends StatelessWidget {
 class _PostBodyDialog extends StatelessWidget {
   final int postId;
 
-  const _PostBodyDialog({Key? key, required this.postId}) : super(key: key);
+  const _PostBodyDialog({required this.postId});
 
   @override
   Widget build(BuildContext context) {
@@ -101,8 +103,8 @@ class _PostBodyDialog extends StatelessWidget {
       child: BlocBuilder<DashboardBloc, DashboardState>(
         builder: (context, state) {
           if (state is PostBodyLoading) {
-            return Padding(
-              padding: const EdgeInsets.all(20.0),
+            return const Padding(
+              padding: EdgeInsets.all(20.0),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -120,16 +122,16 @@ class _PostBodyDialog extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(state.post.title,
-                        style: TextStyle(
+                        style: const TextStyle(
                             fontSize: 18, fontWeight: FontWeight.bold)),
-                    SizedBox(height: 10),
+                    const SizedBox(height: 10),
                     Text(state.post.body),
                   ],
                 ),
               ),
             );
           }
-          return Text("Error al cargar el post");
+          return const Text("Error al cargar el post");
         },
       ),
     );

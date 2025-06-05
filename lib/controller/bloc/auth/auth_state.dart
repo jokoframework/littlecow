@@ -1,12 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:littlecow/core/errors/app_exception.dart';
 import 'package:littlecow/models/user_model.dart';
-///Estados posibles para el manejo de la autenticación.
-///
-/// [AuthInitial] - Estado inicial de la autenticación.
-/// [AuthLoading] - Estado de carga, cuando se está procesando la autenticación.
-/// [AuthAuthenticated] - Estado cuando el usuario ha sido autenticado.
-/// [AuthUnauthenticated] - Estado de error, cuando ocurre un problema durante la autenticación.
 
 abstract class AuthState extends Equatable {
   const AuthState();
@@ -33,9 +27,10 @@ class AuthUnauthenticated extends AuthState {
   final AppException? error;
 
   const AuthUnauthenticated({
-    this.error, required this.message,
+    this.error,
+    required this.message,
   });
 
   @override
-  List<Object?> get props => [message,error];
+  List<Object?> get props => [message, error];
 }
