@@ -53,14 +53,17 @@ Este proyecto está configurado para ejecutarse directamente en Linux, Windows y
 # 1. Verificar las dependencias necesarias para desarrollo en Linux
 sudo apt-get update
 sudo apt-get install clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
-
-# 2. Ejecutar específicamente para Linux desktop
+# 2. Habilitar soporte para Linux 
+flutter config --enable-linux-desktop
+# 3. Ejecutar específicamente para Linux desktop
 flutter run -d linux
 ```
 
 #### Windows Desktop
 ```bash
-# 1. Ejecutar específicamente para Windows desktop
+# 1. Habilitar soporte para Windows dekstop
+flutter config --enable-windows-desktop
+# 2. Ejecutar específicamente para Windows desktop
 flutter run -d windows
 ```
 
@@ -68,8 +71,9 @@ flutter run -d windows
 ```bash
 # 1. Instalar XCode desde la App Store y las tools de línea de comandos
 xcode-select --install
-
-# 2. Ejecutar específicamente para macOS desktop
+# 2. Habilitar soporte para macOS desktop
+flutter config --enable-macos-desktop
+# 3. Ejecutar específicamente para macOS desktop
 flutter run -d macos
 ```
 
