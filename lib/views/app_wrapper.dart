@@ -39,7 +39,7 @@ class AppWrapper extends StatelessWidget {
             ),
           );
         } else if (state is AuthAuthenticated) {
-          return const DashboardScreen();
+          return  DashboardScreen();
         } else if (state is AuthUnauthenticated) {
           if (state.message.contains('conexión') ||
               state.message.contains('internet') ||
