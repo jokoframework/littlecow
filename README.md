@@ -45,24 +45,33 @@ BASE_URL="http://192.168.X.X:8080/api"
 ```
 
 
-### Ejecutar en Linux Desktop
-Para ejecutar específicamente en tu escritorio Linux, sigue estos pasos:
+### Ejecutar en Plataformas Desktop
+Este proyecto está configurado para ejecutarse directamente en Linux, Windows y macOS sin necesidad de ejecutar `flutter create .` después de clonar el repositorio.
 
+#### Linux Desktop
 ```bash
 # 1. Verificar las dependencias necesarias para desarrollo en Linux
 sudo apt-get update
 sudo apt-get install clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
-```
-```bash
-# 2. Habilitar soporte para Linux (si aún no está habilitado)
-flutter config --enable-linux-desktop
-```
-```bash
-# 3. Ejecutar específicamente para Linux desktop
+
+# 2. Ejecutar específicamente para Linux desktop
 flutter run -d linux
 ```
 
-> **Nota:** Este repositorio ya incluye todos los archivos necesarios para ejecutar en Linux Desktop. No es necesario ejecutar `flutter create .` después de clonar el repositorio.
+#### Windows Desktop
+```bash
+# 1. Ejecutar específicamente para Windows desktop
+flutter run -d windows
+```
+
+#### macOS Desktop
+```bash
+# 1. Instalar XCode desde la App Store y las tools de línea de comandos
+xcode-select --install
+
+# 2. Ejecutar específicamente para macOS desktop
+flutter run -d macos
+```
 
 ## Capturas de Pantalla
 

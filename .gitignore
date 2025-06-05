@@ -9,8 +9,13 @@
 .history
 .svn/
 migrate_working_dir/
-*.lock
 .metadata
+
+# Evitar los archivos lock excepto para pubspec.lock
+Podfile.lock
+Gemfile.lock
+*.lock
+!pubspec.lock
 
 # IntelliJ related
 *.iml
@@ -139,11 +144,26 @@ ios/Podfile.lock
 **/xcuserdata/
 
 # macOS
-macos/
-**/Flutter/ephemeral/
-**/Pods/
-**/macos/Flutter/GeneratedPluginRegistrant.swift
+**/macos/Flutter/ephemeral/
+**/macos/Pods/
+**/macos/Flutter/Flutter.podspec
+**/macos/.symlinks/
 **/macos/Flutter/ephemeral
+**/macos/**/*.mode1v3
+**/macos/**/*.mode2v3
+**/macos/**/*.moved-aside
+**/macos/**/*.pbxuser
+**/macos/**/*.perspectivev3
+**/macos/**/*sync/
+**/macos/**/.sconsign.dblite
+**/macos/**/.tags*
+**/macos/**/.vagrant/
+**/macos/**/DerivedData/
+**/macos/**/Icon?
+**/macos/**/.symlinks/
+**/macos/**/profile
+**/macos/**/xcuserdata
+# No ignoramos toda la carpeta macos/ porque contiene archivos necesarios para el proyecto
 
 # Windows
 **/windows/flutter/generated_plugin_registrant.cc
@@ -221,6 +241,21 @@ gen-external-apklibs
 # Environment files
 *.env*
 !.env.example
+
+# Firebase configuration files (si se usan)
+google-services.json
+GoogleService-Info.plist
+firebase_options.dart
+
+# VSCode specific
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/settings.json
+!.vscode/tasks.json
+
+# Flutter version manager
+.fvm/
 
 # Exceptions to above rules.
 !**/ios/**/default.mode1v3

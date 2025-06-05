@@ -151,22 +151,28 @@ Al ejecutar `flutter run` podrían aparecer estos _warnings_:
 
 Esto no afecta el funcionamiento de la app.
 
-## Desarrollo para Linux Desktop
+## Desarrollo para Plataformas Desktop
 
-### Preparación del Repositorio para Linux Desktop
-Para asegurar que el proyecto funcione correctamente en Linux Desktop sin necesidad de ejecutar `flutter create .` después de clonar, sigue estos pasos como desarrollador:
+### Ejecución en Plataformas Desktop
+Este proyecto está configurado para ejecutarse directamente en Linux, Windows y macOS después de clonar, sin necesidad de ejecutar `flutter create .`. Los directorios necesarios ya están incluidos en el repositorio.
 
-1. Después de hacer cambios importantes en el proyecto, ejecuta:
+#### Linux Desktop
+Para ejecutar en Linux Desktop:
 ```bash
-$ flutter create --platforms=linux .
+$ cd <ruta-del-proyecto>
+$ flutter run -d linux
 ```
 
-2. Verifica que los siguientes archivos y directorios estén incluidos en tus commits:
-   - `linux/CMakeLists.txt`
-   - `linux/flutter/`
-   - `linux/runner/`
-   - Evita incluir archivos generados en tiempo de compilación
+#### Windows Desktop
+Para ejecutar en Windows:
+```bash
+$ cd <ruta-del-proyecto>
+$ flutter run -d windows
+```
 
-3. Si necesitas añadir dependencias o configuraciones específicas de Linux, asegúrate de incluir esos cambios en los archivos de configuración.
-
-Estos pasos garantizarán que cualquier persona que clone el repositorio pueda ejecutar directamente la aplicación en Linux Desktop sin pasos adicionales.
+#### macOS Desktop
+Para ejecutar en macOS:
+```bash
+$ cd <ruta-del-proyecto>
+$ flutter run -d macos
+```
