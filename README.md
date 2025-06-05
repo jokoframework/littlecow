@@ -62,6 +62,8 @@ flutter config --enable-linux-desktop
 flutter run -d linux
 ```
 
+> **Nota:** Este repositorio ya incluye todos los archivos necesarios para ejecutar en Linux Desktop. No es necesario ejecutar `flutter create .` después de clonar el repositorio.
+
 ## Capturas de Pantalla
 
 ### Pantalla de Login

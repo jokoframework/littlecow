@@ -150,3 +150,23 @@ Al ejecutar `flutter run` podrían aparecer estos _warnings_:
 <img src="images/warning_java8.png" width="600" >
 
 Esto no afecta el funcionamiento de la app.
+
+## Desarrollo para Linux Desktop
+
+### Preparación del Repositorio para Linux Desktop
+Para asegurar que el proyecto funcione correctamente en Linux Desktop sin necesidad de ejecutar `flutter create .` después de clonar, sigue estos pasos como desarrollador:
+
+1. Después de hacer cambios importantes en el proyecto, ejecuta:
+```bash
+$ flutter create --platforms=linux .
+```
+
+2. Verifica que los siguientes archivos y directorios estén incluidos en tus commits:
+   - `linux/CMakeLists.txt`
+   - `linux/flutter/`
+   - `linux/runner/`
+   - Evita incluir archivos generados en tiempo de compilación
+
+3. Si necesitas añadir dependencias o configuraciones específicas de Linux, asegúrate de incluir esos cambios en los archivos de configuración.
+
+Estos pasos garantizarán que cualquier persona que clone el repositorio pueda ejecutar directamente la aplicación en Linux Desktop sin pasos adicionales.

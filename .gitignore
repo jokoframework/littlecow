@@ -151,10 +151,11 @@ macos/
 **/windows/flutter/generated_plugins.cmake
 
 # Linux
-linux/
+# linux/  # Comentado para incluir los archivos necesarios de Linux
 **/linux/flutter/generated_plugin_registrant.cc
 **/linux/flutter/generated_plugin_registrant.h
 **/linux/flutter/generated_plugins.cmake
+**/linux/.generated_plugins
 
 # Android Studio
 /*/build/

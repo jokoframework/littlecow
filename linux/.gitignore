@@ -1,0 +1,5 @@
+flutter/ephemeral
+.generated_plugins
+*.so
+# Mantener los archivos de configuración esenciales
+!flutter/CMakeLists.txt
