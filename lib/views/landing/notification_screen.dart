@@ -4,10 +4,10 @@ import 'package:intl/intl.dart';
 import 'package:littlecow/controller/bloc/notification/notification_bloc.dart';
 import 'package:littlecow/controller/bloc/notification/notification_event.dart';
 import 'package:littlecow/controller/bloc/notification/notification_state.dart';
-import 'package:littlecow/controller/bloc/auth/auth_bloc.dart';
-import 'package:littlecow/controller/bloc/auth/auth_event.dart';
 import 'package:littlecow/models/notifications/notification_model.dart';
 import 'package:littlecow/models/user_model.dart';
+import 'package:littlecow/controller/bloc/auth/auth_bloc.dart';
+import 'package:littlecow/controller/bloc/auth/auth_state.dart';
 
 class NotificationsScreen extends StatelessWidget {
   final User user;
@@ -17,95 +17,76 @@ class NotificationsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     context.read<NotificationBloc>().add(FetchNotifications(userId: user.id!));
-    return BlocConsumer<NotificationBloc, NotificationState>(
+    return BlocListener<AuthBloc, AuthState>(
       listener: (context, state) {
-        if (state is NotificationError) {
-          if (state.message == 'La sesión ha expirado' ||
-              state.message == 'Credenciales inválidas') {
-            debugPrint(state.message);
-            //context.read<AuthBloc>().add(AuthTokenInvalidated());
-            Navigator.of(context).popUntil((route) => route.isFirst);
-          } else if (state.operationType != 'mark_read') {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Error: ${state.message}'),
-                backgroundColor: Colors.red,
-                duration: const Duration(seconds: 3),
-                action: SnackBarAction(
-                  label: 'Reintentar',
-                  onPressed: () {
-                    context.read<NotificationBloc>().add(
-                          FetchNotifications(userId: user.id!),
-                        );
-                  },
-                ),
-              ),
-            );
-          }
+        if (state is AuthUnauthenticated) {
+          Navigator.of(context).pop();
         }
       },
-      builder: (context, state) {
-        return Scaffold(
-          appBar: AppBar(
-            title: const Text('Notificaciones'),
-            actions: [
-              BlocBuilder<NotificationBloc, NotificationState>(
-                builder: (context, state) {
-                  return IconButton(
-                    icon: const Icon(Icons.refresh),
-                    onPressed: () {
+      child: BlocBuilder<NotificationBloc, NotificationState>(
+        builder: (context, state) {
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text('Notificaciones'),
+              actions: [
+                BlocBuilder<NotificationBloc, NotificationState>(
+                  builder: (context, state) {
+                    return IconButton(
+                      icon: const Icon(Icons.refresh),
+                      onPressed: () {
+                        context.read<NotificationBloc>().add(
+                              NotificationRefresh(userId: user.id!),
+                            );
+                      },
+                    );
+                  },
+                ),
+              ],
+            ),
+            body: BlocBuilder<NotificationBloc, NotificationState>(
+              builder: (context, state) {
+                if (state is NotificationLoading) {
+                  return const Center(
+                    child: CircularProgressIndicator(),
+                  );
+                } else if (state is NotificationLoaded) {
+                  final notifications = state.notifications;
+                  if (notifications.isEmpty) {
+                    return const Center(
+                      child: Text(
+                        'No tienes notificaciones',
+                        style: TextStyle(fontSize: 18),
+                      ),
+                    );
+                  }
+                  return RefreshIndicator(
+                    onRefresh: () async {
                       context.read<NotificationBloc>().add(
                             NotificationRefresh(userId: user.id!),
                           );
                     },
-                  );
-                },
-              ),
-            ],
-          ),
-          body: BlocBuilder<NotificationBloc, NotificationState>(
-            builder: (context, state) {
-              if (state is NotificationLoading) {
-                return const Center(
-                  child: CircularProgressIndicator(),
-                );
-              } else if (state is NotificationLoaded) {
-                final notifications = state.notifications;
-                if (notifications.isEmpty) {
-                  return const Center(
-                    child: Text(
-                      'No tienes notificaciones',
-                      style: TextStyle(fontSize: 18),
+                    child: ListView.builder(
+                      itemCount: notifications.length,
+                      itemBuilder: (context, index) {
+                        return _NotificationCard(
+                          notification: notifications[index],
+                          userId: user.id!,
+                        );
+                      },
                     ),
                   );
                 }
-                return RefreshIndicator(
-                  onRefresh: () async {
-                    context.read<NotificationBloc>().add(
-                          NotificationRefresh(userId: user.id!),
-                        );
-                  },
-                  child: ListView.builder(
-                    itemCount: notifications.length,
-                    itemBuilder: (context, index) {
-                      return _NotificationCard(
-                        notification: notifications[index],
-                        userId: user.id!,
-                      );
-                    },
+                return const Center(
+                  child: Text(
+                    'Cargando notificaciones...',
+                    style: TextStyle(fontSize: 18),
                   ),
                 );
-              }
-              return const Center(
-                child: Text(
-                  'Cargando notificaciones...',
-                  style: TextStyle(fontSize: 18),
-                ),
-              );
-            },
-          ),
-        );
-      },
+              },
+            ),
+          );
+        },
+      ),
     );
   }
 }

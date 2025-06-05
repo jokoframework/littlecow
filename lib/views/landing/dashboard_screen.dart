@@ -1,16 +1,10 @@
 import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:littlecow/controller/bloc/user_activity/user_activity_bloc.dart';
-import 'package:littlecow/controller/bloc/user_activity/user_activity_event.dart';
 import '../../controller/bloc/dashboard/dashboard_bloc.dart';
 import '../../controller/bloc/auth/auth_bloc.dart';
-import '../../controller/bloc/notification/notification_bloc.dart';
 import '../../controller/bloc/auth/auth_event.dart';
-import '../../controller/bloc/notification/notification_event.dart';
 import '../../controller/bloc/auth/auth_state.dart';
-import '../../controller/bloc/notification/notification_state.dart';
-import '../../presentation/widgets/badge_notification_icon.dart';
 import 'notification_screen.dart';
 
 class DashboardScreen extends StatelessWidget {
@@ -19,13 +13,37 @@ class DashboardScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     developer.log('Building DashboardScreen', name: 'DashboardScreen');
     return Scaffold(
-        appBar: AppBar(
-          title: const Text('Dashboard'),
-          actions: [
-            IconButton(icon: const Icon(Icons.notifications), 
-            onPressed: () {
-              developer.log('Notifications icon pressed', name: 'DashboardScreen');
-            }),
+      appBar: AppBar(
+        title: const Text('Dashboard'),
+        actions: [
+            BlocBuilder<AuthBloc, AuthState>(
+              builder: (context, authState) {
+                if (authState is AuthAuthenticated) {
+                  final user = authState.user;
+                  return IconButton(
+                    icon: const Icon(Icons.notifications),
+                    onPressed: () {
+                      developer.log('Notifications icon pressed for user: ${user.name} (ID: ${user.id})', 
+                          name: 'DashboardScreen');
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => NotificationsScreen(user: user),
+                        ),
+                      );
+                    },
+                    tooltip: 'Ver notificaciones',
+                  );
+                } else {
+                  return IconButton(
+                    icon: const Icon(Icons.notifications, color: Colors.grey),
+                    onPressed: () {
+                      context.read<AuthBloc>().add(AuthLoggedOut());
+                    },
+                    tooltip: 'Iniciar sesión para ver notificaciones',
+                  );
+                }
+              },
+            ),
             IconButton(
               icon: const Icon(Icons.logout),
               onPressed: () {

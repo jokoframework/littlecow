@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'dart:async';
+import 'package:flutter/material.dart';
 import 'package:littlecow/core/api_routes.dart'; 
 import 'package:littlecow/core/errors/app_exception.dart';
 import 'package:littlecow/models/token_info_response.dart';
@@ -23,9 +23,6 @@ import 'package:littlecow/core/errors/exception_handler.dart';
 
 class AuthService{
   final Dio _dio;
-  /// Stream para notificar cuando un token ya no es válido
-  final _tokenInvalidController = StreamController<void>.broadcast();
-  Stream<void> get onTokenInvalid => _tokenInvalidController.stream;
   
   AuthService({
     Dio? dio,
@@ -96,6 +93,8 @@ class AuthService{
       if (refreshToken.isEmpty) {
         throw AuthException.sessionExpired();
       }
+      debugPrint('Refreshing access token with refresh token');
+
       final response = await _dio.post(
         ApiRoutes.userAccess,
         options: Options(
@@ -118,11 +117,10 @@ class AuthService{
   /// 
   /// 1. Realiza una petición GET para obtener información del token.
   /// 2. Si la respuesta es exitosa, devuelve la información del token.
-  /// 3. Si el token es inválido, notifica a través del stream.
+  /// 3. Si el token es inválido, lanza una excepción.
   Future<JokoTokenInfoResponse> getTokenInfo(String accessToken) async {
     try {
       if (accessToken.isEmpty) {
-        _tokenInvalidController.add(null);
         throw AuthException.sessionExpired();
       }
       final response = await _dio.get(
@@ -132,9 +130,6 @@ class AuthService{
       final tokenInfo = JokoTokenInfoResponse.fromJson(response.data);
       return tokenInfo;
     } on DioException catch (e) {
-      if (e.response?.statusCode == 401) {
-        _tokenInvalidController.add(null);
-      }
       throw ExceptionHandler.handleDioException(e);
     } catch (e) {
       throw ExceptionHandler.handle(e);
@@ -145,11 +140,10 @@ class AuthService{
   /// 
   /// 1. Realiza una petición GET para obtener información del usuario.
   /// 2. Si la respuesta es exitosa, devuelve la información del usuario.
-  /// 3. Si el token es inválido, notifica a través del stream.
+  /// 3. Si el token es inválido, lanza una excepción.
   Future<UserResponse> getUserInfo(String accessToken, String username) async {
     try {
       if (accessToken.isEmpty) {
-        _tokenInvalidController.add(null);
         throw AuthException.sessionExpired();
       }
       final response = await _dio.get(
@@ -161,17 +155,12 @@ class AuthService{
       final userInfo = UserResponse.fromJson(response.data);
       return userInfo;
     } on DioException catch (e) {
-      if (e.response?.statusCode == 401) {
-        _tokenInvalidController.add(null);
-      }
       throw ExceptionHandler.handleDioException(e);
     } catch (e) {
       throw ExceptionHandler.handle(e);
     }
   }
 
-  /// Liberar recursos cuando ya no se necesite el servicio
   void dispose() {
-    _tokenInvalidController.close();
   }
 }

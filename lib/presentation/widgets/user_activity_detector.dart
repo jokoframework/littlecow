@@ -35,7 +35,6 @@ class _UserActivityDetectorState extends State<UserActivityDetector> {
         setState(() {
           _isAuthenticated = authState is AuthAuthenticated;
         });
-        print('🔍 UserActivityDetector: Initial authentication state: $_isAuthenticated');
       }
     });
   }
@@ -52,7 +51,6 @@ class _UserActivityDetectorState extends State<UserActivityDetector> {
       listener: (context, authState) {
         final wasAuthenticated = _isAuthenticated;
         _isAuthenticated = authState is AuthAuthenticated;
-        print('🔍 UserActivityDetector: Auth state changed - Was: $wasAuthenticated, Now: $_isAuthenticated');
       },
       child: GestureDetector(
         behavior: HitTestBehavior.translucent, 
@@ -70,7 +68,6 @@ class _UserActivityDetectorState extends State<UserActivityDetector> {
   void _resetTimer(BuildContext context) {
     // Solo resetear el temporizador si el usuario está autenticado
     if (!_isAuthenticated) {
-      print('⏱️ UserActivityDetector: Skipping timer reset - User is not authenticated');
       return;
     }    
     
@@ -81,10 +78,9 @@ class _UserActivityDetectorState extends State<UserActivityDetector> {
       if (!mounted) return;
       
       try {
-        print('⏱️ UserActivityDetector: Resetting activity timer');
         context.read<UserActivityBloc>().add(UserActivityResetTimer());
       } catch (e) {
-        print('❌ UserActivityDetector: Error resetting timer: $e');
+        debugPrint('❌ UserActivityDetector: Error resetting timer: $e');
       }
     });
   }

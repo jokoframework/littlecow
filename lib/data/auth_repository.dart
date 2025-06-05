@@ -6,20 +6,45 @@ import 'package:littlecow/models/token_info_response.dart';
 import 'package:littlecow/models/token_response.dart';
 import 'package:littlecow/models/user_model.dart';
 import 'package:littlecow/services/auth_service.dart';
-import 'package:dio/dio.dart';
-import 'dart:async';
-
 import 'package:watch_it/watch_it.dart';
 
 class AuthRepository {
   final  _authService = di<AuthService>();
   final  _secureStorage = di<SecureStorageService>();
-  final _tokenInvalidController = StreamController<void>.broadcast();
   
-  AuthRepository(); 
+  AuthRepository() {
+    cleanInvalidCredentials();
+  }
+  
+  /// Limpia las credenciales inválidas al iniciar la aplicación
+  Future<void> cleanInvalidCredentials() async {
+    try {
+      final hasRefreshToken = await _secureStorage.hasRefreshToken();
+      if (!hasRefreshToken) {
+        return; 
+      }
 
-  /// Obtiene un stream que notifica cuando el token se vuelve inválido
-  Stream<void> get onTokenInvalid => _tokenInvalidController.stream;
+      final accessToken = await _secureStorage.getAccessToken();
+      if (accessToken != null && accessToken.isNotEmpty) {
+        try {
+          final tokenInfo = await _authService.getTokenInfo(accessToken);
+          if (!tokenInfo.success || tokenInfo.expiresIn <= 0) {
+            debugPrint('Token inválido detectado. Limpiando almacenamiento...');
+            await _secureStorage.deleteAllTokens();
+            await _secureStorage.deleteUserData();
+            await _secureStorage.deleteUsername();
+          }
+        } catch (e) {
+          debugPrint('Error verificando token al iniciar: $e. Limpiando almacenamiento...');
+          await _secureStorage.deleteAllTokens();
+          await _secureStorage.deleteUserData();
+          await _secureStorage.deleteUsername();
+        }
+      }
+    } catch (e) {
+      debugPrint('Error general al limpiar credenciales: $e');
+    }
+  }
 
   /// Realiza el inicio de sesión
   /// 
@@ -30,6 +55,7 @@ class AuthRepository {
     try {
       final loginResponse = await _authService.login(username, password);
       if (loginResponse.success) {
+        debugPrint('creacion del refreshToken: ${DateTime.now() }, ${loginResponse.secret}');
         await _secureStorage.saveRefreshToken(loginResponse.secret);
         await _secureStorage.saveUsername(username);
       }
@@ -39,56 +65,25 @@ class AuthRepository {
     }
   }
   
-  /// Obtiene el usuario actual
-  /// 
-  /// Devuelve un [User] si hay un usuario autenticado.
-  /// Lanza AppException en caso de error.
-  /// 
-  /// 1. Primero verifica si hay un token válido
-  /// 2. Si encuentra datos del usuario en el almacenamiento local, los devuelve
-  /// 3. De lo contrario, obtiene el nombre de usuario y realiza una petición a la API
-  /// 4. Si la petición a la API falla, utiliza los datos del token como respaldo
-  /// 5. Almacena los datos del usuario para futura referencia
+  
   Future<User?> getCurrentUser() async {
     try {
-      final accessToken = await getValidAccessToken();
-      if (accessToken == null) {
+      final username = await _secureStorage.getUsername();
+      if (username == null || username.isEmpty) {
         return null;
       }
-      
-      final cachedUser = await _secureStorage.getUserData();
-      if (cachedUser != null) {
-        return cachedUser;
+      final accessToken = await getValidAccessToken();
+      debugPrint('getCurrentUser: accessToken: ${DateTime.now()}, $accessToken');
+      if (accessToken == null || accessToken.isEmpty) {
+        return null;
       }
-      final username = await _secureStorage.getUsername();
-      
-      if (username != null && username.isNotEmpty) {
-        try {
-          final userResponse = await _authService.getUserInfo(accessToken, username);
-          
-          if (userResponse.success && userResponse.user != null) {
-            await _secureStorage.saveUserData(userResponse.user!);
-            return userResponse.user;
-          }
-        } catch (e) {
-          debugPrint ('Error obteniendo usuario por nombre: $e');
-        }
-      }      
-      final tokenInfo = await getTokenInfo();
-      if (tokenInfo != null && tokenInfo.success) {
-        final newUser = User(
-          name: tokenInfo.userId, 
-          role: tokenInfo.audiencie,
-        );
-        await _secureStorage.saveUserData(newUser);
-        return newUser;
+      final userResponse = await _authService.getUserInfo(accessToken, username);
+      if (userResponse.user != null) {
+        await _secureStorage.saveUserData(userResponse.user!);
+        return userResponse.user;
       }
-      
       return null;
     } catch (e) {
-      if (e is AuthException) {
-        return null;
-      }
       throw ExceptionHandler.handle(e);
     }
   }
@@ -103,18 +98,20 @@ class AuthRepository {
       throw ExceptionHandler.handle(e);
     } finally {
       await _secureStorage.deleteAllTokens();
+      await _secureStorage.deleteUserData();
+      await _secureStorage.deleteUsername();
     }
   }
   
   /// Verifica si hay una sesión activa y válida
   Future<bool> hasActiveSession() async {
     try {
-      if (!await _secureStorage.hasRefreshToken()) {
+      bool refreshTokenExists = await _secureStorage.hasRefreshToken();
+      if (refreshTokenExists == false) {
         return false;
       }
-      
-      final user = await getCurrentUser();
-      return user != null;
+      final userExists = await _secureStorage.hasUserData();
+      return userExists;
     } catch (e) {
       return false; 
     }
@@ -138,30 +135,36 @@ class AuthRepository {
 
   /// Obtiene un token de acceso válido
   /// Si el token está expirado, intenta refrescarlo automáticamente
+  /// Ahora verifica la validez del token directamente con token/info
   Future<String?> getValidAccessToken() async {
     try {
       final accessToken = await _secureStorage.getAccessToken();      
       if (accessToken == null || accessToken.isEmpty) {
         return await refreshAccessToken();
-      }      
+      }
+      
       try {
-        final tokenExpired = await isAccessTokenExpired(); 
-        if (!tokenExpired) {
+        final tokenInfo = await _authService.getTokenInfo(accessToken);
+        
+        if (tokenInfo.success && tokenInfo.expiresIn > 30) {
+          final expirationDate = DateTime.now().add(Duration(seconds: tokenInfo.expiresIn));
+          await _secureStorage.saveAccessTokenExpiration(expirationDate.millisecondsSinceEpoch);
           return accessToken;
+        } else {
+          debugPrint('Token inválido o expirado según token/info. Refrescando...');
+          return await refreshAccessToken();
         }
-      } catch (_) {
-      }      
-      return await refreshAccessToken();
+      } catch (e) {
+        debugPrint('Error al verificar token con token/info: $e. Refrescando...');
+        return await refreshAccessToken();
+      }
     } catch (e) {
-      _tokenInvalidController.add(null);
-      return null;
+      throw ExceptionHandler.handle(e);
     }
   }
 
   /// Refresca el token de acceso usando el refresh token
-  /// Usa un flag estático para evitar múltiples eventos de token inválido
   static bool _isRefreshing = false;
-  static bool _hasNotifiedInvalid = false;
   
   Future<String?> refreshAccessToken() async {
     if (_isRefreshing) {
@@ -172,43 +175,25 @@ class AuthRepository {
     try {
       final refreshToken = await _secureStorage.getRefreshToken();
       if (refreshToken == null || refreshToken.isEmpty) {
-        _notifyTokenInvalidIfNeeded();
-        return null;
+        throw AuthException.sessionExpired();
       }
-      
       final tokenResponse = await _authService.refreshAccessToken(refreshToken);
-      if (!tokenResponse.success) {
-        _notifyTokenInvalidIfNeeded();
-        return null;
-      }
-      
       final accessToken = tokenResponse.secret;
       await _secureStorage.saveAccessToken(accessToken);
-      
       if (tokenResponse.expiration > 0) {
         final expirationDate = DateTime.now().add(Duration(seconds: tokenResponse.expiration));
         await _secureStorage.saveAccessTokenExpiration(expirationDate.millisecondsSinceEpoch);
-      }      
-      _hasNotifiedInvalid = false;
-      return accessToken;
-    } on DioException catch (e) {
-      if (e.response?.statusCode == 401) {
-        _notifyTokenInvalidIfNeeded();
       }
-      return null;
+      return accessToken;
+    } on AppException catch (ex) {
+      if (ex.message == AuthException.sessionExpired().message) {
+        debugPrint('Expiro el refresh token');
+      }
+      rethrow;
     } catch (e) {
-      _notifyTokenInvalidIfNeeded();
-      return null;
+      throw ExceptionHandler.handle(e);
     } finally {
       _isRefreshing = false;
-    }
-  }
-  
-  /// Método auxiliar para notificar token inválido solo una vez
-  void _notifyTokenInvalidIfNeeded() {
-    if (!_hasNotifiedInvalid) {
-      _tokenInvalidController.add(null);
-      _hasNotifiedInvalid = true;
     }
   }
 
@@ -237,9 +222,7 @@ class AuthRepository {
     }
   }
   
-  /// Libera recursos cuando ya no se necesita el repositorio
   void dispose() {
     _authService.dispose();
-    _tokenInvalidController.close();
   }
 }

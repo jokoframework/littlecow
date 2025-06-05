@@ -17,19 +17,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthLoggedIn>(_onAuthLoggedIn);
     on<AuthLoggedOut>(_onAuthLoggedOut);
     on<AuthTokenRefresheRequested>(_onAuthTokenRefresheRequested);
-    on<AuthTokenExpired>(_onAuthTokenExpired);
     on<AuthUserInactivityDetected>(_onAuthUserInactivityDetected);
+    on<AuthErrorFromBloc>(_onAuthErrorFromBloc);
   }
 
   void listenToUserActivity(UserActivityBloc userActivityBloc) {
-    // Cancela cualquier suscripción existente
     _onUserActivitySubscription?.cancel();
-    
-    // Configura una nueva suscripción para escuchar cambios futuros
     _onUserActivitySubscription = userActivityBloc.stream.listen((userActivityState) {
-      // Solo nos interesa el estado UserActivityInactive cuando el usuario está autenticado
       if (userActivityState is UserActivityInactive && state is AuthAuthenticated) {
-        print('🔑 AuthBloc: Detected inactivity while authenticated, adding AuthUserInactivityDetected');
         add(AuthUserInactivityDetected());
       }
     });
@@ -49,7 +44,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   /// - [emit] : Función para emitir nuevos estados
     FutureOr<void> _onAuthCheckRequested(
       AuthCheckRequested event, Emitter<AuthState> emit) async {
-    emit(AuthLoading());
     try {
       final isAuthenticated = await _authRepository.hasActiveSession();
       if (isAuthenticated) {
@@ -61,7 +55,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         emit(const AuthUnauthenticated(message: ''));
       }
     }on AppException catch (error) {
-      emit(AuthUnauthenticated(message: error.toString(),error: error));
+      emit(AuthUnauthenticated(message: '', error: error));
     }
   }
 
@@ -117,7 +111,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       await _authRepository.logout();
       emit(const AuthUnauthenticated(message: ''));
     }on AppException catch (error) {
-      emit(AuthUnauthenticated(message: error.toString(),error: error));
+      emit(AuthUnauthenticated(message: '',error: error));
     }
   }
   
@@ -155,25 +149,6 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
   }
 
-  /// Este método se encarga de manejar la expiración del token de autenticación.
-  /// 
-  /// 1. Notifica al usuario que la sesión ha expirado
-  /// 2. Emite un estado de no autenticado
-  /// 
-  /// Parámetros:
-  /// [event] : Evento de expiración de token
-  /// [emit] : Función para emitir nuevos estados
-  /// 
-  FutureOr<void> _onAuthTokenExpired(
-      AuthTokenExpired event, Emitter<AuthState> emit) async {
-    try {
-      await _authRepository.logout();
-      emit(const AuthUnauthenticated(message: 'Su sesión ha expirado, por favor inicie sesión nuevamente'));
-    } on AppException catch (error) {
-      emit(AuthUnauthenticated(message: error.toString(), error: error));
-    }
-  }
-
   /// Este método se encarga de manejar la inactividad del usuario.
   /// 
   /// 1. Cierra la sesión del usuario si está inactivo
@@ -187,27 +162,59 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       AuthUserInactivityDetected event, Emitter<AuthState> emit) async {
     // Verificamos primero que estemos en un estado autenticado
     final currentState = state;
-    print('🔒 AuthBloc: Handling AuthUserInactivityDetected event - Current state: $currentState');
-    
     if (currentState is! AuthAuthenticated) {
-      print('⚠️ AuthBloc: Cannot logout due to inactivity - User is not authenticated');
       return;
     }
-    
     try {
-      print('🔒 AuthBloc: Attempting to logout user due to inactivity');
       await _authRepository.logout();
-      print('👋 AuthBloc: User logged out due to inactivity');
       emit(const AuthUnauthenticated(message: 'Has sido desconectado por inactividad'));
     } on AppException catch (error) {
-      print('❌ AuthBloc: Error logging out user: ${error.toString()}');
       emit(AuthUnauthenticated(message: error.toString(), error: error));
     } catch (e) {
-      print('❌ AuthBloc: Unexpected error logging out user: $e');
       emit(AuthUnauthenticated(message: 'Error inesperado al cerrar sesión: $e'));
     }
   }
   
+  /// Este método maneja errores de autenticación originados en otros blocs
+  /// 
+  /// Convierte los errores específicos en estados apropiados para que el
+  /// listener global en main.dart pueda realizar la navegación adecuada
+  /// Si se recibe un error 401 o un fallo de conexión, se cierran los tokens
+  /// 
+  /// Parámetros:
+  /// [event] : Evento con información del error
+  /// [emit] : Función para emitir nuevos estados
+  FutureOr<void> _onAuthErrorFromBloc(
+      AuthErrorFromBloc event, Emitter<AuthState> emit) async {
+    final errorMessage = event.error.toLowerCase();
+    final isAuthError = errorMessage.contains('401') || 
+                        errorMessage.contains('no autorizado') || 
+                        errorMessage.contains('credenciales') || 
+                        errorMessage.contains('sesión') || 
+                        errorMessage.contains('expirado') ||
+                        errorMessage.contains('token');
+    
+    final isConnectionError = errorMessage.contains('conexión') || 
+                              errorMessage.contains('internet') || 
+                              errorMessage.contains('red') || 
+                              errorMessage.contains('timeout') || 
+                              errorMessage.contains('tiempo de espera');
+    
+    if (isAuthError || isConnectionError) {
+      try {
+        await _authRepository.logout();
+      } catch (e) {
+        emit(const AuthUnauthenticated(message: 'La sesión ha expirado, por favor inicie sesión nuevamente' ));
+      }finally{
+        emit(AuthUnauthenticated(message: isAuthError 
+          ? 'La sesión ha expirado, por favor inicie sesión nuevamente' 
+          : 'Error de conexión, por favor inicie sesión nuevamente'));
+      }
+    } else {
+      emit(AuthUnauthenticated(message: event.error));
+    }
+  }
+
   @override
   Future<void> close() {
     _onUserActivitySubscription?.cancel();

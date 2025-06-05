@@ -37,3 +37,18 @@ class AuthTokenExpired extends AuthEvent {}
 class AuthTokenRefresheRequested extends AuthEvent {}
 
 class AuthUserInactivityDetected extends AuthEvent {}
+
+/// Evento para manejar errores de autenticación desde otros blocs
+/// 
+/// [errorMessage] - Mensaje de error que se mostrará al usuario.
+/// [isNetworkError] - Indica si el error es de red para redirigir a la pantalla adecuada.
+class AuthErrorFromBloc extends AuthEvent {
+  final String  error;
+  
+  const AuthErrorFromBloc({
+    required this.error
+  });
+  
+  @override
+  List<Object> get props => [error];
+}

@@ -9,7 +9,7 @@ class UserActivityBloc extends Bloc<UserActivityEvent, UserActivityState> {
   final Duration inactivityDuration;
   Timer? _inactivityTimer;
 
-  UserActivityBloc({this.inactivityDuration = const Duration(seconds: 5)})
+  UserActivityBloc({this.inactivityDuration = const Duration(minutes: 15)})
       : super(UserActivityInitial()) {
     on<UserActivityStarted>(_onUserActivityStarted);
     on<UserActivityResetTimer>(_onUserActivityResetTimer);

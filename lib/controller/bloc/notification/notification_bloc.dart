@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:littlecow/controller/bloc/auth/auth_bloc.dart';
+import 'package:littlecow/controller/bloc/auth/auth_event.dart';
 import 'package:littlecow/controller/bloc/notification/notification_event.dart';
 import 'package:littlecow/controller/bloc/notification/notification_state.dart';
 import 'package:littlecow/data/notifications_repository.dart';
@@ -7,12 +8,19 @@ import 'package:littlecow/models/notifications/notification_model.dart';
 import 'package:watch_it/watch_it.dart';
 
 class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
-  final  _notificationsRepository = di<NotificationsRepository>();
+  final _notificationsRepository = di<NotificationsRepository>();
+  final _authBloc = di<AuthBloc>();
 
   NotificationBloc() :  super(NotificationInitial()) {
     on<FetchNotifications>(_onFetchNotifications);
     on<NotificationRefresh>(_onNotificationRefresh);
     on<MarkNotificationAsRead>(_onMarkNotificationAsRead);
+  }
+  
+  /// Método auxiliar para manejar errores comunes y notificar al AuthBloc
+  /// cuando sea necesario
+  void _handleErrorAndNotifyAuthBloc(String errorMessage) {
+    _authBloc.add(AuthErrorFromBloc(error: errorMessage));
   }
    
   Future<void> _onFetchNotifications(
@@ -20,14 +28,15 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
     Emitter<NotificationState> emit,
   ) async {
     emit(NotificationLoading());
-
     try {
       final response = await _notificationsRepository.getUserNotifications(event.userId);
       if (response.success) {
         emit(NotificationLoaded(notifications: response.notifications));
       }
     } catch (e) {
-      emit(NotificationError(message: e.toString()));
+      final errorMessage = e.toString();
+      emit(NotificationError(message: errorMessage));      
+      _handleErrorAndNotifyAuthBloc(errorMessage);
     }
   }
 
@@ -37,16 +46,19 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
   ) async {
     try {
       final response = await _notificationsRepository.getUserNotifications(event.userId);
-      
       if (response.success) {
         emit(NotificationLoaded(notifications: response.notifications));
       } else {
         emit(NotificationError(message: response.message));
+        _handleErrorAndNotifyAuthBloc(response.message);
       }
     } catch (e) {
-      emit(NotificationError(message: e.toString()));
+      final errorMessage = e.toString();
+      emit(NotificationError(message: errorMessage));
+      _handleErrorAndNotifyAuthBloc(e.toString());
     }
   }
+  
 
   Future<void> _onMarkNotificationAsRead(
     MarkNotificationAsRead event,
@@ -73,6 +85,7 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
         await _notificationsRepository.markNotificationAsRead(event.notificationId, event.userId);        
       }
     } catch (e) {
+      final errorMessage = e.toString();
       final currentState = state;
       if (currentState is NotificationLoaded) {
         final revertedNotifications = currentState.notifications.map((notification) {
@@ -95,6 +108,7 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
           operationType: 'mark_read',
           notificationId: event.notificationId,
         ));
+        _handleErrorAndNotifyAuthBloc(errorMessage);
       }
     }
   }
