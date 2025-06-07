@@ -81,8 +81,15 @@ class DashboardScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return BlocProvider.value(
-          value: BlocProvider.of<DashboardBloc>(context),
+        return MultiBlocProvider(
+          providers: [
+            BlocProvider.value(
+              value: BlocProvider.of<DashboardBloc>(context),
+            ),
+            BlocProvider.value(
+              value: BlocProvider.of<AuthBloc>(context),
+            ),
+          ],
           child: _PostBodyDialog(postId: postId),
         );
       },
@@ -98,41 +105,47 @@ class _PostBodyDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     context.read<DashboardBloc>().add(LoadPostBodyEvent(postId: postId));
-
-    return Dialog(
-      child: BlocBuilder<DashboardBloc, DashboardState>(
-        builder: (context, state) {
-          if (state is PostBodyLoading) {
-            return const Padding(
-              padding: EdgeInsets.all(20.0),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 20),
-                  Text("Cargando contenido..."),
-                ],
-              ),
-            );
-          } else if (state is PostBodyLoaded && state.post.id == postId) {
-            return SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(20.0),
+    return BlocListener<AuthBloc, AuthState>(
+      listener: (context, state) {
+        if (state is AuthUnauthenticated) {
+          Navigator.of(context).pop();
+        }
+      },
+      child: Dialog(
+        child: BlocBuilder<DashboardBloc, DashboardState>(
+          builder: (context, state) {
+            if (state is PostBodyLoading) {
+              return const Padding(
+                padding: EdgeInsets.all(20.0),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(state.post.title,
-                        style: const TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 10),
-                    Text(state.post.body),
+                    CircularProgressIndicator(),
+                    SizedBox(height: 20),
+                    Text("Cargando contenido..."),
                   ],
                 ),
-              ),
-            );
-          }
-          return const Text("Error al cargar el post");
-        },
+              );
+            } else if (state is PostBodyLoaded && state.post.id == postId) {
+              return SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(state.post.title,
+                          style: const TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 10),
+                      Text(state.post.body),
+                    ],
+                  ),
+                ),
+              );
+            }
+            return const Text("Error al cargar el post");
+          },
+        ),
       ),
     );
   }
