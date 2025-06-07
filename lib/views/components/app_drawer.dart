@@ -54,8 +54,38 @@ class AppDrawer extends StatelessWidget {
             leading: const Icon(Icons.logout),
             title: const Text('Cerrar sesión'),
             onTap: () {
-              Navigator.pop(context); 
-              context.read<AuthBloc>().add(AuthLoggedOut());
+              final authBloc = context.read<AuthBloc>();              
+              Navigator.pop(context);              
+              showDialog(
+                context: context,
+                builder: (BuildContext dialogContext) {
+                  return BlocListener<AuthBloc, AuthState>(
+                    listener: (context, state) {
+                      if (state is AuthUnauthenticated) {
+                        Navigator.of(dialogContext).pop();
+                      }
+                    },
+                    child: AlertDialog(
+                      title: const Text('Cerrar sesión'),
+                      content: const Text('¿Estás seguro que deseas cerrar sesión?'),
+                      actions: [
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(dialogContext).pop();
+                          },
+                          child: const Text('Cancelar'),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            authBloc.add(AuthLoggedOut());
+                          },
+                          child: const Text('Aceptar'),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
             },
           ),
         ],

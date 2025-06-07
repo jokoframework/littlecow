@@ -54,6 +54,7 @@ class MyApp extends StatelessWidget {
       child: UserActivityDetector(
         child: MaterialApp(
           title: 'Little Cow',
+          debugShowCheckedModeBanner: false,
           theme: ThemeData(
             primarySwatch: Colors.blue,
             visualDensity: VisualDensity.adaptivePlatformDensity,
