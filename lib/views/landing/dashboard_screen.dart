@@ -5,6 +5,8 @@ import '../../controller/bloc/dashboard/dashboard_bloc.dart';
 import '../../controller/bloc/auth/auth_bloc.dart';
 import '../../controller/bloc/auth/auth_event.dart';
 import '../../controller/bloc/auth/auth_state.dart';
+import '../../controller/bloc/notification/notification_bloc.dart';
+import '../../controller/bloc/notification/notification_state.dart';
 import 'notification_screen.dart';
 import '../components/app_drawer.dart';
 
@@ -23,19 +25,46 @@ class DashboardScreen extends StatelessWidget {
               builder: (context, authState) {
                 if (authState is AuthAuthenticated) {
                   final user = authState.user;
-                  return IconButton(
-                    icon: const Icon(Icons.notifications),
-                    onPressed: () {
-                      developer.log(
-                          'Notifications icon pressed for user: ${user.name} (ID: ${user.id})',
-                          name: 'DashboardScreen');
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => NotificationsScreen(user: user),
+                  return BlocBuilder<NotificationBloc, NotificationState>(
+                    builder: (context, notificationState) {
+                      final bool hasUnreadNotifications =
+                          notificationState is NotificationLoaded
+                              ? notificationState.hasUnreadNotifications
+                              : false;
+                      return IconButton(
+                        icon: Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            const Icon(Icons.notifications),
+                            if (hasUnreadNotifications)
+                              Positioned(
+                                top: 0,
+                                right: 0,
+                                child: Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: const BoxDecoration(
+                                    color: Colors.red,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
+                        onPressed: () {
+                          developer.log(
+                              'Notifications icon pressed for user: ${user.name} (ID: ${user.id})',
+                              name: 'DashboardScreen');
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  NotificationsScreen(user: user),
+                            ),
+                          );
+                        },
+                        tooltip: 'Ver notificaciones',
                       );
                     },
-                    tooltip: 'Ver notificaciones',
                   );
                 } else {
                   return IconButton(

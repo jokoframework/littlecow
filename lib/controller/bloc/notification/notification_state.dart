@@ -14,11 +14,15 @@ class NotificationLoading extends NotificationState {}
 
 class NotificationLoaded extends NotificationState {
   final List<NotificationModel> notifications;
+  final bool hasUnreadNotifications;
 
-  const NotificationLoaded({required this.notifications});
+  const NotificationLoaded({
+    required this.notifications, 
+    this.hasUnreadNotifications = false,
+  });
 
   @override
-  List<Object?> get props => [notifications];
+  List<Object?> get props => [notifications, hasUnreadNotifications];
 }
 
 class NotificationError extends NotificationState {

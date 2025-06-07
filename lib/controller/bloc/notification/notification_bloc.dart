@@ -30,7 +30,13 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
       final response =
           await _notificationsRepository.getUserNotifications(event.userId);
       if (response.success) {
-        emit(NotificationLoaded(notifications: response.notifications));
+        // Calcular si hay notificaciones sin leer
+        final hasUnreadNotifications = response.notifications.any((notification) => !notification.isRead);
+        
+        emit(NotificationLoaded(
+          notifications: response.notifications,
+          hasUnreadNotifications: hasUnreadNotifications,
+        ));
       }
     } catch (e) {
       final errorMessage = e.toString();
@@ -47,7 +53,11 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
       final response =
           await _notificationsRepository.getUserNotifications(event.userId);
       if (response.success) {
-        emit(NotificationLoaded(notifications: response.notifications));
+        final hasUnreadNotifications = response.notifications.any((notification) => !notification.isRead);        
+        emit(NotificationLoaded(
+          notifications: response.notifications,
+          hasUnreadNotifications: hasUnreadNotifications,
+        ));
       } else {
         emit(NotificationError(message: response.message));
         _handleErrorAndNotifyAuthBloc(response.message);
