@@ -6,6 +6,7 @@ import '../../controller/bloc/auth/auth_bloc.dart';
 import '../../controller/bloc/auth/auth_event.dart';
 import '../../controller/bloc/auth/auth_state.dart';
 import 'notification_screen.dart';
+import '../components/app_drawer.dart';
 
 class DashboardScreen extends StatelessWidget {
   const DashboardScreen({super.key});
@@ -47,15 +48,9 @@ class DashboardScreen extends StatelessWidget {
                 }
               },
             ),
-            IconButton(
-              icon: const Icon(Icons.logout),
-              onPressed: () {
-                context.read<AuthBloc>().add(AuthLoggedOut());
-              },
-              tooltip: 'Cerrar sesión',
-            ),
           ],
         ),
+        drawer: const AppDrawer(),
         body: BlocBuilder<DashboardBloc, DashboardState>(
           builder: (context, state) {
             if (state is DashboardLoading) {

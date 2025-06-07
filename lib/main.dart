@@ -4,7 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:littlecow/controller/bloc/user_activity/user_activity_bloc.dart';
 import 'package:littlecow/controller/bloc/user_activity/user_activity_event.dart';
 import 'package:littlecow/core/di/locator_service.dart';
-import 'package:littlecow/views/app_wrapper.dart';
+import 'package:littlecow/views/components/app_wrapper.dart';
 import 'package:littlecow/controller/bloc/auth/auth_event.dart';
 import 'package:watch_it/watch_it.dart';
 import 'controller/bloc/auth/auth_bloc.dart';

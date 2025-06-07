@@ -113,7 +113,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     try {
       await _authRepository.logout();
       emit(const AuthUnauthenticated(
-          message: 'Has sido desconectado por inactividad'));
+          message: 'Tu sesión ha cerrado por inactividad'));
     } on AppException catch (error) {
       emit(AuthUnauthenticated(message: error.toString(), error: error));
     } catch (e) {
