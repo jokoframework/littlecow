@@ -218,7 +218,8 @@ gen-external-apklibs
 *.ear
 
 # Environment files
-.env*
+*.env*
+!.env.example
 
 # Exceptions to above rules.
 !**/ios/**/default.mode1v3

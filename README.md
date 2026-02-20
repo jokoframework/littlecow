@@ -18,13 +18,17 @@ Sigue estos pasos para configurar y ejecutar el proyecto localmente:
 git clone https://github.com/jokoframework/littlecow.git
 cd littlecow
 
-# 2. Limpiar el proyecto 
+# 2. Configurar variables de entorno
+cp .env.example .env
+# Edita el archivo .env con tus configuraciones
+
+# 3. Limpiar el proyecto 
 flutter clean
 
-# 3. Instalar dependencias
+# 4. Instalar dependencias
 flutter pub get
 
-# 4. Ejecutar (usar tu dispositivo conectado o emulador)
+# 5. Ejecutar (usar tu dispositivo conectado o emulador)
 flutter run
 ```
 
