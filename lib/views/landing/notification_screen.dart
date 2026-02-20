@@ -65,14 +65,20 @@ class NotificationsScreen extends StatelessWidget {
                             NotificationRefresh(userId: user.id!),
                           );
                     },
-                    child: ListView.builder(
-                      itemCount: notifications.length,
-                      itemBuilder: (context, index) {
-                        return _NotificationCard(
-                          notification: notifications[index],
-                          userId: user.id!,
-                        );
-                      },
+                    child: Column(
+                      children: [
+                        Expanded(
+                          child: ListView.builder(
+                            itemCount: notifications.length,
+                            itemBuilder: (context, index) {
+                              return _NotificationCard(
+                                notification: notifications[index],
+                                userId: user.id!,
+                              );
+                            },
+                          ),
+                        ),
+                      ],
                     ),
                   );
                 }

@@ -30,7 +30,17 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
       final response =
           await _notificationsRepository.getUserNotifications(event.userId);
       if (response.success) {
-        emit(NotificationLoaded(notifications: response.notifications));
+        final totalNotifications = response.metadata?.total ?? response.notifications.length;        
+        final limitedNotifications = response.notifications.length > 15 
+            ? response.notifications.sublist(0, 15) 
+            : response.notifications;        
+        final hasUnreadNotifications = limitedNotifications.any((notification) => !notification.isRead);
+        
+        emit(NotificationLoaded(
+          notifications: limitedNotifications,
+          hasUnreadNotifications: hasUnreadNotifications,
+          totalNotifications: totalNotifications,
+        ));
       }
     } catch (e) {
       final errorMessage = e.toString();
@@ -47,7 +57,20 @@ class NotificationBloc extends Bloc<NotificationEvent, NotificationState> {
       final response =
           await _notificationsRepository.getUserNotifications(event.userId);
       if (response.success) {
-        emit(NotificationLoaded(notifications: response.notifications));
+        // Obtener el total de notificaciones
+        final totalNotifications = response.metadata?.total ?? response.notifications.length;
+        
+        // Limitar a las últimas 30 notificaciones
+        final limitedNotifications = response.notifications.length > 30 
+            ? response.notifications.sublist(0, 30) 
+            : response.notifications;
+            
+        final hasUnreadNotifications = limitedNotifications.any((notification) => !notification.isRead);        
+        emit(NotificationLoaded(
+          notifications: limitedNotifications,
+          hasUnreadNotifications: hasUnreadNotifications,
+          totalNotifications: totalNotifications,
+        ));
       } else {
         emit(NotificationError(message: response.message));
         _handleErrorAndNotifyAuthBloc(response.message);

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:littlecow/controller/bloc/auth/auth_state.dart';
 import 'package:littlecow/controller/bloc/auth/auth_bloc.dart';
+import 'package:littlecow/controller/bloc/notification/notification_bloc.dart';
+import 'package:littlecow/controller/bloc/notification/notification_event.dart';
 import 'package:littlecow/controller/bloc/user_activity/user_activity_bloc.dart';
 import 'package:littlecow/controller/bloc/user_activity/user_activity_event.dart';
 import 'package:littlecow/presentation/widgets/app_snackbar.dart';
@@ -19,7 +21,10 @@ class AppWrapper extends StatelessWidget {
     return BlocConsumer<AuthBloc, AuthState>(
       listener: (context, state) {
         if (state is AuthAuthenticated) {
-          context.read<UserActivityBloc>().add(UserActivityStarted());
+          context.read<UserActivityBloc>().add(UserActivityStarted());          
+          if (state.user.id != null) {
+            context.read<NotificationBloc>().add(FetchNotifications(userId: state.user.id!));
+          }
         }
         if (state is AuthUnauthenticated && state.message.isNotEmpty) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
