@@ -59,6 +59,10 @@ class SecureStorageService {
     final token = await getRefreshToken();
     return token != null && token.isNotEmpty;
   }
+  Future<bool> hasUserData() async {
+    final userJson = await _storage.read(key: userDataKey);
+    return userJson != null && userJson.isNotEmpty;
+  }
   
   Future<void> saveUserData(User user) async {
     final userJson = jsonEncode(user.toJson());

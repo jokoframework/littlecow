@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:littlecow/views/security/login_screen.dart';
-import 'package:littlecow/views/landing/dashboard_screen.dart';
-import 'package:littlecow/controller/events/auth_event.dart';
-import 'package:littlecow/controller/states/auth_state.dart';
-import 'controller/bloc/auth_bloc.dart';
-import 'controller/bloc/dashboard_bloc.dart';
-import 'controller/bloc/notification_bloc.dart';
-import 'package:littlecow/presentation/widgets/app_snackbar.dart';
+import 'package:littlecow/controller/bloc/user_activity/user_activity_bloc.dart';
+import 'package:littlecow/controller/bloc/user_activity/user_activity_event.dart';
+import 'package:littlecow/core/di/locator_service.dart';
+import 'package:littlecow/views/app_wrapper.dart';
+import 'package:littlecow/controller/bloc/auth/auth_event.dart';
+import 'package:watch_it/watch_it.dart';
+import 'controller/bloc/auth/auth_bloc.dart';
+import 'controller/bloc/dashboard/dashboard_bloc.dart';
+import 'controller/bloc/notification/notification_bloc.dart';
+import 'package:littlecow/presentation/widgets/user_activity_detector.dart';
 
 Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
+  initLocator();
   runApp(const MyApp());
 }
 
@@ -22,52 +26,39 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
+        BlocProvider<UserActivityBloc>(
+          create: (context) {
+            return UserActivityBloc(
+                inactivityDuration: const Duration(minutes: 15))
+              ..add(UserActivityStarted());
+          },
+        ),
         BlocProvider<AuthBloc>(
-          create: (context) => AuthBloc()..add(AuthCheckRequested()),
+          create: (context) {
+            final authBloc = di<AuthBloc>()..add(AuthCheckRequested());
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              final userActivityBloc =
+                  BlocProvider.of<UserActivityBloc>(context, listen: false);
+              authBloc.listenToUserActivity(userActivityBloc);
+            });
+            return authBloc;
+          },
         ),
         BlocProvider<DashboardBloc>(
-          create: (context) => DashboardBloc(),
+          create: (context) => di<DashboardBloc>(),
         ),
         BlocProvider<NotificationBloc>(
-          create: (context) => NotificationBloc(),
+          create: (context) => di<NotificationBloc>(),
         ),
       ],
-      child: MaterialApp(
-        title: 'Little Cow',
-        theme: ThemeData(
-          primarySwatch: Colors.blue,
-          visualDensity: VisualDensity.adaptivePlatformDensity,
-        ),
-        home: BlocConsumer<AuthBloc, AuthState>(
-          listener: (context, state) {
-            if (state is AuthFailure) {
-              AppSnackBar.showError(
-                context: context,
-                message: state.message,
-                duration: const Duration(seconds: 4),
-              );
-            }
-          },
-          builder: (context, state) {
-            if (state is AuthInitial || state is AuthLoading) {
-              return const Scaffold(
-                body: Center(child: CircularProgressIndicator()),
-              );
-            }
-            if (state is AuthAuthenticated) {
-              return const DashboardScreen();
-            }
-            if (state is AuthUnauthenticated) {
-              return const LoginScreen();
-            }
-            if (state is AuthFailure) {
-              return const LoginScreen();
-            }
-            if (state is AuthTokenInvalidated) {
-              return const LoginScreen();
-            }
-            return const LoginScreen();
-          },
+      child: UserActivityDetector(
+        child: MaterialApp(
+          title: 'Little Cow',
+          theme: ThemeData(
+            primarySwatch: Colors.blue,
+            visualDensity: VisualDensity.adaptivePlatformDensity,
+          ),
+          home: const AppWrapper(),
         ),
       ),
     );

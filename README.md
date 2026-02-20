@@ -2,7 +2,7 @@
 ## Entorno de desarrollo
 | Componente| Version | 
 |----------|----------|
-| Flutter    |  3.29.2  | 
+| Flutter    |  3.29.3  | 
 | Dart    | 3.7.2   | 
 | Android Studio    | 2024.3 | 
 | Android SDK  | 35.0.1 | 
@@ -32,21 +32,49 @@ flutter pub get
 flutter run
 ```
 
-### Ejecutar en Linux Desktop
-Para ejecutar específicamente en tu escritorio Linux, sigue estos pasos:
+### Configuración para Dispositivos Móviles
+**IMPORTANTE:** Cuando pruebes la aplicación con un teléfono conectado o emulador, debes modificar el archivo `.env` para cambiar "localhost" por la IP del servidor en `BASE_URL`.
 
+Ejemplo:
+```bash
+# Original
+BASE_URL="http://localhost:8080/api"
+
+# Modificado para dispositivo móvil
+BASE_URL="http://192.168.X.X:8080/api"
+```
+
+
+### Ejecutar en Plataformas Desktop
+Este proyecto está configurado para ejecutarse directamente en Linux, Windows y macOS sin necesidad de ejecutar `flutter create .` después de clonar el repositorio.
+
+#### Linux Desktop
 ```bash
 # 1. Verificar las dependencias necesarias para desarrollo en Linux
 sudo apt-get update
 sudo apt-get install clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev
-```
-```bash
-# 2. Habilitar soporte para Linux (si aún no está habilitado)
+# 2. Habilitar soporte para Linux 
 flutter config --enable-linux-desktop
-```
-```bash
 # 3. Ejecutar específicamente para Linux desktop
 flutter run -d linux
+```
+
+#### Windows Desktop
+```bash
+# 1. Habilitar soporte para Windows dekstop
+flutter config --enable-windows-desktop
+# 2. Ejecutar específicamente para Windows desktop
+flutter run -d windows
+```
+
+#### macOS Desktop
+```bash
+# 1. Instalar XCode desde la App Store y las tools de línea de comandos
+xcode-select --install
+# 2. Habilitar soporte para macOS desktop
+flutter config --enable-macos-desktop
+# 3. Ejecutar específicamente para macOS desktop
+flutter run -d macos
 ```
 
 ## Capturas de Pantalla

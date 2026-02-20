@@ -30,11 +30,6 @@ class AuthException extends AppException {
     );
   }
   
-  factory AuthException.tokenExpired() {
-    return const AuthException(
-      message: 'No hay un token de acceso válido',
-    );
-  }
   factory AuthException.networkError() {
     return const AuthException(
       message: 'Error de conexión',
@@ -43,10 +38,12 @@ class AuthException extends AppException {
   
   factory AuthException.unknown(dynamic error) {
     return AuthException(
-      message: 'Error desconocido: ${error.toString()}',
+      message: 'Error desconocido.',
       details: error,
     );
   }
+
+  get errorType => null;
 }
 class NotificationException extends AppException {
   const NotificationException({
@@ -62,7 +59,7 @@ class NotificationException extends AppException {
   
   factory NotificationException.unknown(dynamic error) {
     return NotificationException(
-      message: 'Error desconocido: ${error.toString()}',
+      message: 'Error desconocido',
       details: error,
     );
   }

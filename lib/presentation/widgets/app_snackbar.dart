@@ -13,7 +13,6 @@ class AppSnackBar {
     final Color backgroundColor;
     final Duration snackBarDuration;
     
-    // Configurar según el tipo
     switch (type) {
       case SnackBarType.error:
         icon = Icons.error_outline;
@@ -55,9 +54,7 @@ class AppSnackBar {
         action: SnackBarAction(
           label: 'Cerrar',
           textColor: Colors.white,
-          onPressed: () {
-            ScaffoldMessenger.of(context).hideCurrentSnackBar();
-          },
+          onPressed: () {}, 
         ),
       ),
     );

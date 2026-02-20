@@ -1,31 +1,30 @@
 import 'package:dio/dio.dart';
-import 'package:littlecow/constants/api_routes.dart';
+import 'package:littlecow/core/api_routes.dart';
 import 'package:littlecow/core/errors/app_exception.dart';
 import 'package:littlecow/core/errors/exception_handler.dart';
 import 'package:littlecow/models/notifications/notifications_response.dart';
 import 'package:littlecow/models/base_response.dart';
-import 'package:littlecow/services/auth_service.dart';
 
 class NotificationService {
   final Dio _dio;
-  final AuthService _authService;
 
   NotificationService({
     Dio? dio,
-    AuthService? authService,
-  }) : _dio = dio ?? Dio(),
-       _authService = authService ?? AuthService();
+  }) : _dio = dio ?? Dio();
 
-  /// Obtiene las notificaciones de un usuario específico
+  /// Metodo que obitiene las notificaciones de un usuario
+  /// Parametros:
+  /// - [userId]: ID del usuario
+  /// - [accessToken]: Token de acceso del usuario
   /// 
-  /// [userId] es el identificador único del usuario (UUID)
+  /// Retorno:
+  /// - [NotificationsResponse] con las notificaciones del usuario
   /// 
-  /// Retorna un [NotificationsResponse] con la lista de notificaciones
-  Future<NotificationsResponse> getUserNotifications(String userId) async {
+  Future<NotificationsResponse> getUserNotifications(
+      String userId, String accessToken) async {
     try {
-      final accessToken = await _authService.getValidAccessToken();
-      if (accessToken == null) {
-        throw AuthException.tokenExpired();
+      if (accessToken.isEmpty) {
+        throw AuthException.sessionExpired();
       }
       final response = await _dio.get(
         ApiRoutes.getUserNotifications(userId),
@@ -40,20 +39,23 @@ class NotificationService {
       throw ExceptionHandler.handle(e);
     }
   }
-  
-  /// Marca una notificación como leída
+  /// Metodo que marca una notificación como leída
+  /// Parámetros:
+  /// - [notificationId]: ID de la notificación a marcar como leída
+  /// - [accessToken]: Token de acceso del usuario
+  /// - [userId]: ID del usuario propietario de la notificación
   /// 
-  /// [notificationId] es el identificador único de la notificación
+  /// Retorno:
+  /// - [bool] indicando si la operación fue exitosa
   /// 
-  /// Retorna true si se marcó correctamente, false en caso contrario
-  Future<bool> markNotificationAsRead(String notificationId) async {
+  Future<bool> markNotificationAsRead(
+      String notificationId, String accessToken, String userId) async {
     try {
-      final accessToken = await _authService.getValidAccessToken();
-      if (accessToken == null) {
-        throw AuthException.tokenExpired();
+      if (accessToken.isEmpty) {
+        throw AuthException.sessionExpired();
       }
       final response = await _dio.put(
-        ApiRoutes.markNotificationAsRead(notificationId),
+        ApiRoutes.markNotificationAsRead(notificationId, userId),
         options: Options(
           headers: ApiRoutes.getCommonHeaders(token: accessToken),
         ),

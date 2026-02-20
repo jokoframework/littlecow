@@ -1,0 +1,28 @@
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:littlecow/controller/bloc/app_bloc_observer.dart';
+import 'package:littlecow/controller/bloc/auth/auth_bloc.dart';
+import 'package:littlecow/controller/bloc/dashboard/dashboard_bloc.dart';
+import 'package:littlecow/controller/bloc/notification/notification_bloc.dart';
+import 'package:littlecow/data/auth_repository.dart';
+import 'package:littlecow/data/notifications_repository.dart';
+import 'package:littlecow/data/secure_storage_service.dart';
+import 'package:littlecow/services/auth_service.dart';
+import 'package:littlecow/services/notification_service.dart'
+    show NotificationService;
+import 'package:watch_it/watch_it.dart';
+
+Future<void> initLocator() async {
+  Bloc.observer = AppBlocObserver();
+
+  di.registerLazySingleton<SecureStorageService>(() => SecureStorageService());
+  di.registerLazySingleton<AuthService>(() => AuthService());
+  di.registerLazySingleton<NotificationService>(() => NotificationService());
+
+  di.registerLazySingleton<AuthRepository>(() => AuthRepository());
+  di.registerLazySingleton<NotificationsRepository>(
+      () => NotificationsRepository());
+
+  di.registerSingleton<AuthBloc>(AuthBloc());
+  di.registerSingleton<DashboardBloc>(DashboardBloc());
+  di.registerSingleton<NotificationBloc>(NotificationBloc());
+}

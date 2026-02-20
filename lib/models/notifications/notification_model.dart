@@ -4,7 +4,8 @@ enum NotificationType {
   warning,
   info,
   success,
-  error
+  error,
+  alert
 }
 
 class NotificationModel {
@@ -31,6 +32,8 @@ class NotificationModel {
     NotificationType mapCategory(String? category) {
       switch (category?.toLowerCase()) {
         case 'alert':
+          return NotificationType.alert;
+        case 'warning':
           return NotificationType.warning;
         case 'info':
           return NotificationType.info;
@@ -46,9 +49,9 @@ class NotificationModel {
     return NotificationModel(
       id: json['id'] ?? '',
       title: json['title'] ?? '',
-      message: json['body'] ?? '', // API uses 'body' for message content
-      type: mapCategory(json['category']), // API uses 'category' instead of 'type'
-      isRead: json['read'] ?? false, // API uses 'read' instead of 'isRead'
+      message: json['message'] ?? '', 
+      type: mapCategory(json['category']), 
+      isRead: json['read'] ?? false, 
       createdAt: json['timestamp'] != null 
         ? DateTime.parse(json['timestamp']) 
         : DateTime.now(),
@@ -60,29 +63,29 @@ class NotificationModel {
     return {
       'id': id,
       'title': title,
-      'body': message, // Map to API structure
-      'category': _categoryFromType(), // Convert type to category string
+      'body': message, 
+      'category': _categoryFromType(), 
       'read': isRead,
       'timestamp': createdAt.toIso8601String(),
       'channel': channel,
     };
   }
 
-  // Helper method to convert NotificationType to API category
   String _categoryFromType() {
     switch (type) {
       case NotificationType.warning:
-        return 'alert';
+        return 'warning';
       case NotificationType.info:
         return 'info';
       case NotificationType.success:
         return 'success';
       case NotificationType.error:
         return 'error';
+      case NotificationType.alert:
+        return 'alert';
     }
   }
 
-  // Helper method to get appropriate icon based on notification type
   IconData getIcon() {
     switch (type) {
       case NotificationType.warning:
@@ -93,10 +96,11 @@ class NotificationModel {
         return Icons.check_circle_rounded;
       case NotificationType.error:
         return Icons.error_rounded;
+      case NotificationType.alert:
+        return Icons.notifications_active_rounded;
     }
   }
 
-  // Helper method to get appropriate color based on notification type
   Color getColor() {
     switch (type) {
       case NotificationType.warning:
@@ -107,6 +111,8 @@ class NotificationModel {
         return Colors.green;
       case NotificationType.error:
         return Colors.red;
+      case NotificationType.alert:
+        return Colors.purple;
     }
   }
 }

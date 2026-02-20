@@ -150,3 +150,29 @@ Al ejecutar `flutter run` podrían aparecer estos _warnings_:
 <img src="images/warning_java8.png" width="600" >
 
 Esto no afecta el funcionamiento de la app.
+
+## Desarrollo para Plataformas Desktop
+
+### Ejecución en Plataformas Desktop
+Este proyecto está configurado para ejecutarse directamente en Linux, Windows y macOS después de clonar, sin necesidad de ejecutar `flutter create .`. Los directorios necesarios ya están incluidos en el repositorio.
+
+#### Linux Desktop
+Para ejecutar en Linux Desktop:
+```bash
+$ cd <ruta-del-proyecto>
+$ flutter run -d linux
+```
+
+#### Windows Desktop
+Para ejecutar en Windows:
+```bash
+$ cd <ruta-del-proyecto>
+$ flutter run -d windows
+```
+
+#### macOS Desktop
+Para ejecutar en macOS:
+```bash
+$ cd <ruta-del-proyecto>
+$ flutter run -d macos
+```
